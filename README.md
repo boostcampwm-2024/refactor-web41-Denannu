@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/e15ccd74-1e0c-4e02-8df2-6fed0f3236ff" alt="데나무 로고"/>
+  <img src="https://github.com/user-attachments/assets/bb757453-fa06-40ee-b568-7b91f7f03af8" alt="데나무 로고"/>
 </div>
 
 > 🎋 개발자들의 이야기가 자라나는 곳, 데나무
