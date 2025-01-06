@@ -67,7 +67,7 @@ RSS 링크만으로 간편하게 블로그를 등록할 수 있어요. 등록된
 |  **Backend**   |     **Backend**      |        **Backend**         |        **Frontend**        |
 |:--------------:| :------------------: | :-------------------------: | :-----------------------: |
 | ![김현지][kimhji] |  ![양현호][adkm12]  |     ![정지혜][Jeongwisdom]     |    ![한영준][zizonyoungjun]     |
-| **[J076 ][kimhji_g]** | **[J155 양현호][adkm12_g]** | **[J229 정지혜][Jeongwisdom_g]** | **[J274_한영준][zizonyoungjun_g]** |
+| **[J076_김현지][kimhji_g]** | **[J155 양현호][adkm12_g]** | **[J229 정지혜][Jeongwisdom_g]** | **[J274_한영준][zizonyoungjun_g]** |
 
 
 [kimhji]: https://avatars.githubusercontent.com/u/126762281?v=4
