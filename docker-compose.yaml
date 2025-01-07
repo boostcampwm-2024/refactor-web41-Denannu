@@ -7,7 +7,7 @@ services:
     volumes:
       - ./ecosystem.config.js:/app/ecosystem.config.js
     env_file:
-      - ./configs/.env.db.production
+      - ./server/configs/.env.db.production
     networks:
       - refact41-denannu
 
@@ -21,7 +21,6 @@ services:
     container_name: nginx
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - nginx.conf:/etc/nginx/nginx.conf
       - ./statix:/var/refact41-denannu/static
     networks:
       - refact41-denannu
