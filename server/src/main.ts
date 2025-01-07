@@ -20,8 +20,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:5173',
-      'https://www.denamu.site',
-      'https://denamu.site',
+      'https://www.denannu.site',
+      'https://denannu.site',
     ],
     credentials: true,
   });
