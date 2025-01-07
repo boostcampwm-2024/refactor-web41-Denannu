@@ -3,9 +3,10 @@ FROM node:18
 RUN npm install -g pm2 typescript
 
 WORKDIR /app
-RUN mkdir server
-RUN mkdir feed-crawler
+RUN mkdir ./server
+RUN mkdir ./feed-crawler
 
+COPY ./ecosystem.config.js ./
 COPY ./server/package*.json ./server
 
 WORKDIR /app/server
