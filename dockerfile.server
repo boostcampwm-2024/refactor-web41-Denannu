@@ -1,15 +1,20 @@
-FROM keymetrics/pm2
+FROM node:18
+
+RUN npm install -g pm2 typescript
 
 WORKDIR /app
+RUN mkdir server
+RUN mkdir feed-crawler
 
 COPY ./server/package*.json ./server
+
 WORKDIR /app/server
-RUN npm ci
+RUN npm install
 
 WORKDIR /app
 COPY ./feed-crawler/package*.json ./feed-crawler
 WORKDIR /app/feed-crawler
-RUN npm ci
+RUN npm install
 
 WORKDIR /app
 COPY ./server ./server
