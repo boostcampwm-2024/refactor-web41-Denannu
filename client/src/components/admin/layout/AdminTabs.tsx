@@ -28,6 +28,7 @@ export const AdminTabs = ({ setLogout }: { setLogout: () => void }) => {
   const [selectedBlog, setSelectedBlog] = useState<SelectedBlogType>({ blogId: 0, blogName: "" });
   const [reason, setReason] = useState("");
   const { searchParam } = useAdminSearchStore();
+
   const {
     data: pendingData,
     isLoading: isPendingLoading,
@@ -74,7 +75,11 @@ export const AdminTabs = ({ setLogout }: { setLogout: () => void }) => {
   const { mutate: rejectMutate } = useAdminReject(onSuccess, onError);
 
   const handleActions = (data: AdminRequest, actions: "accept" | "reject") => {
-    actions === "accept" ? acceptMutate(data) : rejectMutate(data);
+    if (actions === "accept") {
+      acceptMutate(data);
+    } else {
+      rejectMutate(data);
+    }
   };
 
   const handleSelectedBlog = ({ blogName, blogId }: SelectedBlogType) => {
@@ -100,27 +105,17 @@ export const AdminTabs = ({ setLogout }: { setLogout: () => void }) => {
       </div>
     );
 
-  const pendingRss: AdminRssData[] =
+  const filterRssData = (data: AdminRssData[]) =>
     searchParam === ""
-      ? pendingData.data
-      : pendingData.data.filter(
-          (data: AdminRssData) =>
-            data.name.includes(searchParam) || data.userName.includes(searchParam) || data.rssUrl.includes(searchParam)
+      ? data
+      : data.filter(
+          (item) =>
+            item.name.includes(searchParam) || item.userName.includes(searchParam) || item.rssUrl.includes(searchParam)
         );
-  const acceptedRss: AdminRssData[] =
-    searchParam === ""
-      ? acceptedData.data
-      : acceptedData.data.filter(
-          (data: AdminRssData) =>
-            data.name.includes(searchParam) || data.userName.includes(searchParam) || data.rssUrl.includes(searchParam)
-        );
-  const rejectedRss: AdminRssData[] =
-    searchParam === ""
-      ? rejectedData.data
-      : rejectedData.data.filter(
-          (data: AdminRssData) =>
-            data.name.includes(searchParam) || data.userName.includes(searchParam) || data.rssUrl.includes(searchParam)
-        );
+
+  const pendingRss = filterRssData(pendingData?.data || []);
+  const acceptedRss = filterRssData(acceptedData?.data || []);
+  const rejectedRss = filterRssData(rejectedData?.data || []);
 
   return (
     <div>
