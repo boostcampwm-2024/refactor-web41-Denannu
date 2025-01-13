@@ -1,4 +1,5 @@
 import { admin } from "@/api/services/admin/rss";
+import { ONE_SECOND } from "@common/constant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useFetchData = (queryKey: string[], queryFn: () => Promise<any>) => {
@@ -8,7 +9,7 @@ export const useFetchData = (queryKey: string[], queryFn: () => Promise<any>) =>
     queryKey,
     queryFn,
     retry: 1,
-    refetchInterval: 1000 * 5,
+    refetchInterval: 5 * ONE_SECOND,
   });
 
   const refetchData = () => {
