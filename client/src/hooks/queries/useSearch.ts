@@ -5,6 +5,7 @@ import { debounce } from "@/utils/debounce";
 // import axios from "axios"; //mockAPI사용시
 import { getSearch } from "@/api/services/search";
 import { SearchRequest } from "@/types/search";
+import { ONE_MINUTE } from "@common/constant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useSearch = ({ query, filter, page, pageSize }: SearchRequest) => {
@@ -18,14 +19,16 @@ export const useSearch = ({ query, filter, page, pageSize }: SearchRequest) => {
     handler(query);
 
     return () => {
-      handler.cancel && handler.cancel();
+      if (handler.cancel) {
+        handler.cancel();
+      }
     };
   }, [query]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["getSearch", debouncedQuery, filter, page, pageSize],
     queryFn: () => getSearch({ query, filter, page, pageSize }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5 * ONE_MINUTE,
     retry: 1,
   });
   const refetchSearch = () => {
