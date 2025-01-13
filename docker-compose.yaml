@@ -1,0 +1,36 @@
+services:
+  server:
+    build:
+      context: ./
+      dockerfile: dockerfile.server
+    container_name: server
+    volumes:
+      - ./ecosystem.config.js:/app/ecosystem.config.js
+    env_file:
+      - ./server/configs/.env.db.production
+    networks:
+      - refact41-denannu
+
+  nginx:
+    build:
+      context: ./
+      dockerfile: dockerfile.nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    container_name: nginx
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./statix:/var/refact41-denannu/static
+    networks:
+      - refact41-denannu
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    networks:
+      - refact41-denannu
+
+networks:
+  refact41-denannu:
+    driver: bridge
