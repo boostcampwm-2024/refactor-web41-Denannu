@@ -1,5 +1,6 @@
+import { ONE_SECOND } from "@/constants/time";
+
 import { admin } from "@/api/services/admin/rss";
-import { ONE_SECOND } from "@common/constant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useFetchData = (queryKey: string[], queryFn: () => Promise<any>) => {

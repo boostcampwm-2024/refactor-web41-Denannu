@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 
+import { ONE_MINUTE } from "@/constants/time";
+
 import { debounce } from "@/utils/debounce";
 
 // import axios from "axios"; //mockAPI사용시
 import { getSearch } from "@/api/services/search";
 import { SearchRequest } from "@/types/search";
-import { ONE_MINUTE } from "@common/constant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useSearch = ({ query, filter, page, pageSize }: SearchRequest) => {

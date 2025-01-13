@@ -1,4 +1,4 @@
-import { ONE_MINUTE } from "@/common/constant";
+import { ONE_MINUTE } from "@/constants/time";
 
 import { chart } from "@/api/services/chart/chart";
 import { ChartResponse, ChartPlatforms } from "@/types/chart";
