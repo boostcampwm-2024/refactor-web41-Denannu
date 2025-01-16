@@ -82,7 +82,6 @@ export const useRegisterModalStore = create(
     {
       name: "register-modal-storage",
       partialize: (state) => ({
-        rssUrl: state.rssUrl,
         bloggerName: state.bloggerName,
         userName: state.userName,
         email: state.email,
