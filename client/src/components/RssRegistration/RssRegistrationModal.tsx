@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import FormInput from "@/components/RssRegistration/FormInput";
-import { PlatformSelector } from "@/components/RssRegistration/PlatformSelector.tsx";
+import { PlatformSelector } from "@/components/RssRegistration/PlatformSelector";
 import { RssUrlInput } from "@/components/RssRegistration/RssUrlInput";
 import Alert from "@/components/common/Alert";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { useRssRegistrationForm } from "@/hooks/common/useRssRegistrationForm.ts";
-import { useRegisterRss } from "@/hooks/queries/useRegisterRss.ts";
+import { useRssRegistrationForm } from "@/hooks/common/useRssRegistrationForm";
+import { useRegisterRss } from "@/hooks/queries/useRegisterRss";
 
-import { AlertType } from "@/types/alert.ts";
-import { RegisterRss } from "@/types/rss.ts";
+import { useRegisterModalStore } from "@/store/useRegisterModalStore";
+import { AlertType } from "@/types/alert";
+import { RegisterRss } from "@/types/rss";
 
 export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: () => void; rssOpen: boolean }) {
   const [alertOpen, setAlertOpen] = useState<AlertType>({ title: "", content: "", isOpen: false });
@@ -28,7 +29,7 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
     () => {
       setAlertOpen({
         title: "RSS 요청 성공!",
-        content: "관리자가 검토후 처리 결과를 입력해주신 메일을 통해 전달드릴 예정이에요!",
+        content: "관리자가 검토 후 처리 결과를 입력해주신 메일을 통해 전달드릴 예정이에요!",
         isOpen: true,
       });
     },
@@ -40,6 +41,16 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
       });
     }
   );
+
+  useEffect(() => {
+    if (rssOpen) {
+      const store = useRegisterModalStore.getState();
+      store.setRssUrlValid(/^(https?:\/\/[^\s]+)$/i.test(store.rssUrl));
+      store.setBloggerNameValid(store.bloggerName.trim().length > 0);
+      store.setUserNameValid(store.userName.trim().length > 0);
+      store.setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.email));
+    }
+  }, [rssOpen]);
 
   const handleAlertClose = () => {
     setAlertOpen({ title: "", content: "", isOpen: false });
