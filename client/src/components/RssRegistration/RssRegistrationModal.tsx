@@ -23,6 +23,8 @@ import { RegisterRss } from "@/types/rss";
 
 export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: () => void; rssOpen: boolean }) {
   const [alertOpen, setAlertOpen] = useState<AlertType>({ title: "", content: "", isOpen: false });
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageText, setMessageText] = useState("");
 
   const { platform, values, handlers, formState } = useRssRegistrationForm();
   const { mutate } = useRegisterRss(
@@ -45,6 +47,14 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
   useEffect(() => {
     if (rssOpen) {
       const store = useRegisterModalStore.getState();
+      const hasPreviousData =
+        store.bloggerName.trim() !== "" || store.userName.trim() !== "" || store.email.trim() !== "";
+      if (hasPreviousData) {
+        setMessageText("등록 중이던 데이터를 불러왔습니다.");
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      }
+
       store.setRssUrlValid(/^(https?:\/\/[^\s]+)$/i.test(store.rssUrl));
       store.setBloggerNameValid(store.bloggerName.trim().length > 0);
       store.setUserNameValid(store.userName.trim().length > 0);
@@ -82,6 +92,7 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
         <div className="space-y-6">
           <PlatformSelector platform={platform} onPlatformChange={handlers.handlePlatformChange} />
           <RssUrlInput platform={platform} value={values.urlUsername} onChange={handlers.handleUsernameChange} />
+          {showMessage && <div className="mb-4 text-sm text-primary font-medium">{messageText}</div>}
 
           <div className="space-y-4">
             <FormInput
