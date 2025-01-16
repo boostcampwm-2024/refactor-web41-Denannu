@@ -2,7 +2,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Feed, FeedView } from './feed.entity';
 import { Injectable } from '@nestjs/common';
 import { QueryFeedDto } from './dto/query-feed.dto';
-import { SearchType } from './dto/search-feed.dto';
+import { Cursor, SearchType } from './dto/search-feed.dto';
 
 @Injectable()
 export class FeedRepository extends Repository<Feed> {
@@ -15,38 +15,44 @@ export class FeedRepository extends Repository<Feed> {
     limit: number,
     type: SearchType,
     offset: number,
-  ) {
-    const queryBuilder = this.createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.blog', 'rss_accept')
-      .addSelect(this.getMatchAgainstExpression(type, 'find'), 'relevance')
-      .where(this.getWhereCondition(type), { find })
-      .orderBy('relevance', 'DESC')
-      .addOrderBy('feed.createdAt', 'DESC')
+    cursor?: { createdAt: string },
+  ): Promise<[Feed[], number, Cursor]> {
+    const queryBuilder = this.createQueryBuilder('feed_view')
+      .innerJoinAndSelect('feed_view.blog', 'rss_accept')
+      .where(this.getWhereCondition(type), { find: `%${find}%` })
       .skip(offset)
       .take(limit);
 
-    return queryBuilder.getManyAndCount();
-  }
-
-  private getMatchAgainstExpression(type: string, parameter: string): string {
-    switch (type) {
-      case 'title':
-        return `MATCH(feed.title) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE)`;
-      case 'blogName':
-        return `MATCH(rss_accept.name) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE)`;
-      case 'all':
-        return `(MATCH(feed.title) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE) + MATCH(rss_accept.name) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE))`;
+    if (cursor) {
+      queryBuilder.andWhere(`(feed.createdAt < :createdAt)`, {
+        createdAt: cursor.createdAt,
+      });
     }
+
+    const total = await queryBuilder.getCount();
+
+    const { raw, entities } = await queryBuilder.getRawAndEntities();
+
+    const nextCursor = null;
+    // raw.length > 0
+    //   ? new Cursor(
+    //       raw[raw.length - 1].relevance,
+    //       entities[entities.length - 1].createdAt,
+    //     )
+    //   : null;
+
+    const feedsData = entities as Feed[];
+    return [feedsData, total, nextCursor];
   }
 
   private getWhereCondition(type: string): string {
     switch (type) {
       case 'title':
-        return 'MATCH(feed.title) AGAINST (:find IN NATURAL LANGUAGE MODE)';
+        return 'feed_view.title LIKE :find';
       case 'blogName':
-        return 'MATCH(rss_accept.name) AGAINST (:find IN NATURAL LANGUAGE MODE)';
+        return 'rss_accept.name LIKE :find';
       case 'all':
-        return '(MATCH(feed.title) AGAINST (:find IN NATURAL LANGUAGE MODE) OR MATCH(rss_accept.name) AGAINST (:find IN NATURAL LANGUAGE MODE))';
+        return 'feed_view.title LIKE :find OR rss_accept.name LIKE :find';
     }
   }
 

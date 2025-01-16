@@ -70,5 +70,10 @@ export class SearchFeedRes {
     private result: SearchFeedResult[],
     private totalPages: number,
     private limit: number,
+    private cursor: Cursor,
   ) {}
+}
+
+export class Cursor {
+  constructor(private createdAt: Date) {}
 }
