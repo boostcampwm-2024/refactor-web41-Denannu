@@ -2,7 +2,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Feed, FeedView } from './feed.entity';
 import { Injectable } from '@nestjs/common';
 import { QueryFeedDto } from './dto/query-feed.dto';
-import { Cursor, SearchType } from './dto/search-feed.dto';
+import { SearchType } from './dto/search-feed.dto';
 
 @Injectable()
 export class FeedRepository extends Repository<Feed> {
@@ -15,34 +15,14 @@ export class FeedRepository extends Repository<Feed> {
     limit: number,
     type: SearchType,
     offset: number,
-    cursor?: { createdAt: string },
-  ): Promise<[Feed[], number, Cursor]> {
+  ): Promise<[Feed[], number]> {
     const queryBuilder = this.createQueryBuilder('feed_view')
       .innerJoinAndSelect('feed_view.blog', 'rss_accept')
       .where(this.getWhereCondition(type), { find: `%${find}%` })
       .skip(offset)
       .take(limit);
 
-    if (cursor) {
-      queryBuilder.andWhere(`(feed.createdAt < :createdAt)`, {
-        createdAt: cursor.createdAt,
-      });
-    }
-
-    const total = await queryBuilder.getCount();
-
-    const { raw, entities } = await queryBuilder.getRawAndEntities();
-
-    const nextCursor = null;
-    // raw.length > 0
-    //   ? new Cursor(
-    //       raw[raw.length - 1].relevance,
-    //       entities[entities.length - 1].createdAt,
-    //     )
-    //   : null;
-
-    const feedsData = entities as Feed[];
-    return [feedsData, total, nextCursor];
+    return queryBuilder.getManyAndCount();
   }
 
   private getWhereCondition(type: string): string {

@@ -117,13 +117,17 @@ export class FeedService {
     const { find, page, limit, type } = searchFeedReq;
     const offset = (page - 1) * limit;
     if (this.validateSearchType(type)) {
-      const [result, totalCount, cursor] =
-        await this.feedRepository.searchFeedList(find, limit, type, offset);
+      const [result, totalCount] = await this.feedRepository.searchFeedList(
+        find,
+        limit,
+        type,
+        offset,
+      );
 
       const results = SearchFeedResult.feedsToResults(result);
       const totalPages = Math.ceil(totalCount / limit);
 
-      return new SearchFeedRes(totalCount, results, totalPages, limit, cursor);
+      return new SearchFeedRes(totalCount, results, totalPages, limit);
     }
     throw new BadRequestException('검색 타입이 잘못되었습니다.');
   }
