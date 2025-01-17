@@ -15,38 +15,24 @@ export class FeedRepository extends Repository<Feed> {
     limit: number,
     type: SearchType,
     offset: number,
-  ) {
-    const queryBuilder = this.createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.blog', 'rss_accept')
-      .addSelect(this.getMatchAgainstExpression(type, 'find'), 'relevance')
-      .where(this.getWhereCondition(type), { find })
-      .orderBy('relevance', 'DESC')
-      .addOrderBy('feed.createdAt', 'DESC')
+  ): Promise<[Feed[], number]> {
+    const queryBuilder = this.createQueryBuilder('feed_view')
+      .innerJoinAndSelect('feed_view.blog', 'rss_accept')
+      .where(this.getWhereCondition(type), { find: `%${find}%` })
       .skip(offset)
       .take(limit);
 
     return queryBuilder.getManyAndCount();
   }
 
-  private getMatchAgainstExpression(type: string, parameter: string): string {
-    switch (type) {
-      case 'title':
-        return `MATCH(feed.title) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE)`;
-      case 'blogName':
-        return `MATCH(rss_accept.name) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE)`;
-      case 'all':
-        return `(MATCH(feed.title) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE) + MATCH(rss_accept.name) AGAINST (:${parameter} IN NATURAL LANGUAGE MODE))`;
-    }
-  }
-
   private getWhereCondition(type: string): string {
     switch (type) {
       case 'title':
-        return 'MATCH(feed.title) AGAINST (:find IN NATURAL LANGUAGE MODE)';
+        return 'feed_view.title LIKE :find';
       case 'blogName':
-        return 'MATCH(rss_accept.name) AGAINST (:find IN NATURAL LANGUAGE MODE)';
+        return 'rss_accept.name LIKE :find';
       case 'all':
-        return '(MATCH(feed.title) AGAINST (:find IN NATURAL LANGUAGE MODE) OR MATCH(rss_accept.name) AGAINST (:find IN NATURAL LANGUAGE MODE))';
+        return 'feed_view.title LIKE :find OR rss_accept.name LIKE :find';
     }
   }
 
