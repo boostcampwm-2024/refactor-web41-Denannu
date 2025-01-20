@@ -55,7 +55,7 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
         setTimeout(() => setShowMessage(false), 3000);
       }
 
-      store.setRssUrlValid(/^(https?:\/\/[^\s]+)$/i.test(store.rssUrl));
+      store.setRssUrlValid(/^(https?:\/\/[^\s]+)$/i.test(store.rssUrl || ""));
       store.setBloggerNameValid(store.bloggerName.trim().length > 0);
       store.setUserNameValid(store.userName.trim().length > 0);
       store.setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(store.email));
@@ -70,7 +70,7 @@ export default function RssRegistrationModal({ onClose, rssOpen }: { onClose: ()
 
   const handleRegister = () => {
     const data: RegisterRss = {
-      rssUrl: values.rssUrl,
+      rssUrl: values.rssUrl || "",
       blog: values.bloggerName,
       name: values.userName,
       email: values.email,

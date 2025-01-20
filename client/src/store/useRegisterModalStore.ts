@@ -34,8 +34,8 @@ interface RegisterModalState {
   isFormValid: () => boolean;
 }
 
-export const useRegisterModalStore = create(
-  persist<RegisterModalState>(
+export const useRegisterModalStore = create<RegisterModalState>()(
+  persist(
     (set, get) => ({
       rssUrl: "",
       bloggerName: "",
