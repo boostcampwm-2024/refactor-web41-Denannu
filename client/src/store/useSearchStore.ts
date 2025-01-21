@@ -43,7 +43,7 @@ export const useSearchStore = create<SearchState>((set) => ({
       nextIndex: cursor?.nextIndex || null,
     }),
   resetPage: () => set({ page: 1 }),
-  resetParam: () => set({ searchParam: "" }),
+  resetParam: () => set({ searchParam: "", preData: null, nextIndex: null }),
   resetFilter: () => set({ currentFilter: "title" }),
 }));
 
