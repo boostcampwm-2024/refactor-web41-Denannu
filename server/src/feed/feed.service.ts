@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { FeedRepository, FeedViewRepository } from './feed.repository';
 import { QueryFeedDto } from './dto/query-feed.dto';
-import { FeedView } from './feed.entity';
+import { Feed, FeedView } from './feed.entity';
 import {
   FeedPaginationResult,
   FeedPaginationResponseDto,
@@ -34,8 +34,7 @@ export class FeedService {
   ) {}
 
   async readFeedPagination(queryFeedDto: QueryFeedDto) {
-    const feedList =
-      await this.feedViewRepository.findFeedPagination(queryFeedDto);
+    const feedList = await this.feedRepository.findFeedPagination(queryFeedDto);
     const hasMore = this.existNextFeed(feedList, queryFeedDto.limit);
     if (hasMore) feedList.pop();
     const lastId = this.getLastIdFromFeedList(feedList);
@@ -47,7 +46,7 @@ export class FeedService {
     return { result, lastId, hasMore };
   }
 
-  private existNextFeed(feedList: FeedView[], limit: number) {
+  private existNextFeed(feedList: FeedView[] | Feed[], limit: number) {
     return feedList.length > limit;
   }
 
@@ -63,7 +62,7 @@ export class FeedService {
       return parseInt(id[1]);
     });
 
-    return feedList.map((feed): FeedPaginationResult => {
+    return feedList.map((feed) => {
       return {
         ...feed,
         isNew: newFeedIds.includes(feed.feedId),
