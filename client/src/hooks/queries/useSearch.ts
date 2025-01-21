@@ -60,6 +60,7 @@ export const useSearch = ({ query, filter, page, pageSize, cursor }: SearchReque
   return {
     data,
     isLoading,
+    isError: !!error,
     error,
     refetchSearch,
   };

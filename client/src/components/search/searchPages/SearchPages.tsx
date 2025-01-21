@@ -30,7 +30,12 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         if (preData) {
           setPage(page - 1);
           queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, cursor],
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, { ...cursor, nextIndex: null }],
+          });
+        } else {
+          setPage(page - 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10],
           });
         }
         break;
@@ -38,7 +43,12 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         if (nextIndex) {
           setPage(page + 1);
           queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, cursor],
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, { ...cursor, preData: null }],
+          });
+        } else {
+          setPage(page + 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10],
           });
         }
         break;
@@ -54,7 +64,10 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
 
   return (
     <Pagination className="flex gap-4 absolute bottom-0">
-      <PaginationPrevious onClick={() => handlePage("prev")} className="border-none min-w-[100px]" />
+      <PaginationPrevious
+        onClick={() => handlePage("prev")}
+        className={`border-none min-w-[100px] ${page === 1 ? "pointer-events-none opacity-0" : ""}`}
+      />
 
       <PaginationContent>
         {page > 2 && <PaginationEllipsis />}
@@ -68,7 +81,10 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         {page < totalPages - 2 && <PaginationEllipsis />}
       </PaginationContent>
 
-      <PaginationNext onClick={() => handlePage("next")} className="border-none min-w-[100px]" />
+      <PaginationNext
+        onClick={() => handlePage("next")}
+        className={`border-none min-w-[100px] ${page === totalPages ? "pointer-events-none opacity-0" : ""}`}
+      />
     </Pagination>
   );
 }

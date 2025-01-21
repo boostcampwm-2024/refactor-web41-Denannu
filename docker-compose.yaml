@@ -16,8 +16,8 @@ services:
       context: ./
       dockerfile: dockerfile.nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     container_name: nginx
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -28,6 +28,9 @@ services:
   redis:
     image: redis:7.4.1
     container_name: redis
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
     networks:
       - refact41-denannu
 
