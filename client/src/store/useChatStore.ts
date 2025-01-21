@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 import { ChatType } from "@/types/chat";
 
-const CHAT_SERVER_URL = "https://denamu.site";
+const CHAT_SERVER_URL = import.meta.env.VITE_BASE_URL;
 
 interface ChatStore {
   chatHistory: ChatType[];

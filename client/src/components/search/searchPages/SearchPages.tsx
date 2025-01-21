@@ -11,27 +11,63 @@ import {
 import generatePage from "@/utils/pagination";
 
 import { useSearchStore } from "@/store/useSearchStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SearchPages({ totalPages }: { totalPages: number }) {
-  const { page, setPage } = useSearchStore();
+  const { page, setPage, preData, nextIndex, searchParam, currentFilter } = useSearchStore();
+  const queryClient = useQueryClient();
   const pageNumber = generatePage(page, totalPages);
 
   const handlePage = (mode: number | "prev" | "next") => {
+    const cursor = {
+      curPage: page,
+      preData,
+      nextIndex,
+    };
+
     switch (mode) {
       case "prev":
-        if (page > 1) setPage(page - 1);
+        if (preData) {
+          setPage(page - 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, { ...cursor, nextIndex: null }],
+          });
+        } else {
+          setPage(page - 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10],
+          });
+        }
         break;
       case "next":
-        if (page < totalPages) setPage(page + 1);
+        if (nextIndex) {
+          setPage(page + 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, { ...cursor, preData: null }],
+          });
+        } else {
+          setPage(page + 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10],
+          });
+        }
         break;
       default:
-        if (typeof mode === "number") setPage(mode);
+        if (typeof mode === "number") {
+          setPage(mode);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, mode, 10, cursor],
+          });
+        }
     }
   };
 
   return (
     <Pagination className="flex gap-4 absolute bottom-0">
-      <PaginationPrevious onClick={() => handlePage("prev")} className="border-none min-w-[100px]" />
+      <PaginationPrevious
+        onClick={() => handlePage("prev")}
+        className={`border-none min-w-[100px] ${page === 1 ? "pointer-events-none opacity-0" : ""}`}
+      />
 
       <PaginationContent>
         {page > 2 && <PaginationEllipsis />}
@@ -45,7 +81,10 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         {page < totalPages - 2 && <PaginationEllipsis />}
       </PaginationContent>
 
-      <PaginationNext onClick={() => handlePage("next")} className="border-none min-w-[100px]" />
+      <PaginationNext
+        onClick={() => handlePage("next")}
+        className={`border-none min-w-[100px] ${page === totalPages ? "pointer-events-none opacity-0" : ""}`}
+      />
     </Pagination>
   );
 }

@@ -29,7 +29,7 @@ export const useRssRegistrationForm = () => {
 
   const getUsernameFromUrl = () => {
     const { prefix, suffix } = PLATFORMS[platform];
-    return store.rssUrl.replace(prefix, "").replace(suffix, "");
+    return (store.rssUrl || "").replace(prefix, "").replace(suffix, "");
   };
 
   return {
