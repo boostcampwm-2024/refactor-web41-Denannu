@@ -64,7 +64,10 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
 
   return (
     <Pagination className="flex gap-4 absolute bottom-0">
-      <PaginationPrevious onClick={() => handlePage("prev")} className="border-none min-w-[100px]" />
+      <PaginationPrevious
+        onClick={() => handlePage("prev")}
+        className={`border-none min-w-[100px] ${page === 1 ? "pointer-events-none opacity-0" : ""}`}
+      />
 
       <PaginationContent>
         {page > 2 && <PaginationEllipsis />}
@@ -78,7 +81,10 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         {page < totalPages - 2 && <PaginationEllipsis />}
       </PaginationContent>
 
-      <PaginationNext onClick={() => handlePage("next")} className="border-none min-w-[100px]" />
+      <PaginationNext
+        onClick={() => handlePage("next")}
+        className={`border-none min-w-[100px] ${page === totalPages ? "pointer-events-none opacity-0" : ""}`}
+      />
     </Pagination>
   );
 }
