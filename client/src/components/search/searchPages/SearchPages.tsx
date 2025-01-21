@@ -30,7 +30,12 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         if (preData) {
           setPage(page - 1);
           queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, cursor],
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, { ...cursor, nextIndex: null }],
+          });
+        } else {
+          setPage(page - 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10],
           });
         }
         break;
@@ -38,7 +43,12 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         if (nextIndex) {
           setPage(page + 1);
           queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, cursor],
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, { ...cursor, preData: null }],
+          });
+        } else {
+          setPage(page + 1);
+          queryClient.invalidateQueries({
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10],
           });
         }
         break;
