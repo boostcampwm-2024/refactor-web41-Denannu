@@ -4,16 +4,18 @@ import { ONE_MINUTE } from "@/constants/time";
 
 import { debounce } from "@/utils/debounce";
 
-// import axios from "axios"; //mockAPI사용시
 import { getSearch } from "@/api/services/search";
-import { SearchRequest } from "@/types/search";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchStore } from "@/store/useSearchStore";
+import { SearchRequest, SearchResponse, CursorData } from "@/types/search";
+import { useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 
-export const useSearch = ({ query, filter, page, pageSize }: SearchRequest) => {
+export const useSearch = ({ query, filter, page, pageSize, cursor }: SearchRequest & { cursor?: CursorData }) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const queryClient = useQueryClient();
+  const { setCursor } = useSearchStore();
+
   useEffect(() => {
-    const handler = debounce((newQuery) => {
+    const handler = debounce((newQuery: string) => {
       setDebouncedQuery(newQuery);
     }, 300);
 
@@ -26,14 +28,39 @@ export const useSearch = ({ query, filter, page, pageSize }: SearchRequest) => {
     };
   }, [query]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["getSearch", debouncedQuery, filter, page, pageSize],
-    queryFn: () => getSearch({ query, filter, page, pageSize }),
+  const queryOptions: UseQueryOptions<SearchResponse, Error> = {
+    queryKey: ["getSearch", debouncedQuery, filter, page, pageSize, cursor],
+    queryFn: () =>
+      getSearch({
+        query: debouncedQuery,
+        filter,
+        page,
+        pageSize,
+        cursor,
+      }),
     staleTime: 5 * ONE_MINUTE,
     retry: 1,
-  });
-  const refetchSearch = () => {
-    queryClient.invalidateQueries({ queryKey: ["getSearch"] });
+    enabled: debouncedQuery.length > 0,
   };
-  return { data, isLoading, error, refetchSearch };
+
+  const { data, isLoading, error } = useQuery<SearchResponse, Error>(queryOptions);
+
+  useEffect(() => {
+    if (data?.data?.cursor) {
+      setCursor(data.data.cursor);
+    }
+  }, [data, setCursor]);
+
+  const refetchSearch = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["getSearch", debouncedQuery, filter, page, pageSize],
+    });
+  };
+
+  return {
+    data,
+    isLoading,
+    error,
+    refetchSearch,
+  };
 };
