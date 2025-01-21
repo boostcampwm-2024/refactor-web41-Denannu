@@ -8,6 +8,7 @@ export const getSearch = async (data: SearchRequest): Promise<SearchResponse> =>
       type: data.filter,
       page: data.page,
       limit: data.pageSize,
+      cursor: data.cursor ? JSON.stringify(data.cursor) : undefined,
     },
   });
   return response.data;
