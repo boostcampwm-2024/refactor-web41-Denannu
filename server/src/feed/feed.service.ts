@@ -115,6 +115,7 @@ export class FeedService {
 
   async searchFeedList(searchFeedReq: SearchFeedReq) {
     const { find, page, limit, type, cursor } = searchFeedReq;
+    console.log(cursor);
     if (this.validateSearchType(type)) {
       const [result, totalCount, nextCursor] =
         await this.feedRepository.searchFeedList(
@@ -127,7 +128,6 @@ export class FeedService {
 
       const results = SearchFeedResult.feedsToResults(result);
       const totalPages = Math.ceil(totalCount / limit);
-
       return new SearchFeedRes(
         totalCount,
         results,
