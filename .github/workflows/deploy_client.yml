@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "client/**"
+      - 'client/**'
   workflow_dispatch: # 수동 실행을 허용하는 이벤트
 
 jobs:
@@ -21,12 +21,10 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            export NVM_DIR=~/.nvm
-            source ~/.nvm/nvm.sh
 
-            cd /var/web05-Denamu
+            cd /refactor-web41-denannu
             git pull origin main
             cd client/
+            echo "${{ secrets.ENV_FE}}" > .env
 
-            npm ci
-            npm run build
+            docker compose up -d --build nginx

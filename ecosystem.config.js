@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = {
   apps: [
     {
-      name: "Denamu",
+      name: "Denannu",
       script: "./server/dist/src/main.js",
       instances: "1",
       exec_mode: "fork",

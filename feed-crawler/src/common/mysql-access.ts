@@ -19,9 +19,9 @@ class MySQLConnection {
   private createPool() {
     return mysql.createPool({
       host: process.env.DB_HOST,
-      user: process.env.DB_USER,
+      user: process.env.DB_USERNAME,
       password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
+      database: process.env.DB_DATABASE,
       connectionLimit: CONNECTION_LIMIT,
     });
   }
