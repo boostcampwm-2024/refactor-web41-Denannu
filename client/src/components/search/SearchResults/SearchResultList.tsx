@@ -14,7 +14,7 @@ const COMMANDCLASS = "flex h-[28rem] justify-center items-center";
 
 export default function SearchResults() {
   const { searchParam, currentFilter, page } = useSearchStore();
-  const { data, isLoading } = useSearch({
+  const { data, isLoading, isError } = useSearch({
     query: searchParam,
     filter: currentFilter,
     page,
@@ -53,7 +53,7 @@ export default function SearchResults() {
 
   const getRenderKey = () => {
     if (isLoading) return "loading";
-    if (!data) return "error";
+    if (isError) return "error";
     if (searchParam.length === 0) return "noQuery";
     if (results.length === 0) return "searchEmpty";
     return "default";
