@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/31
     paths:
       - 'client/**'
   workflow_dispatch: # 수동 실행을 허용하는 이벤트
@@ -36,7 +35,7 @@ jobs:
           context: .
           file: ./dockerfile.nginx
           push: true
-          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest
+          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest,
             ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:${{ github.run_number }}
           cache-from: type=registry,ref=${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest
           cache-to: type=inline

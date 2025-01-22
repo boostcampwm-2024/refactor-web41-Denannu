@@ -4,10 +4,9 @@ on:
   push:
     branches:
       - main
-      - feature/31
     paths:
       - 'server/**'
-  workflow_dispatch:
+  workflow_dispatch: # 수동 실행을 허용하는 이벤트
 
 jobs:
   push_to_registry:
@@ -39,7 +38,7 @@ jobs:
           context: .
           file: ./dockerfile.server
           push: true
-          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest
+          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest,
             ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:${{ github.run_number }}
           cache-from: type=registry,ref=${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest
           cache-to: type=inline
