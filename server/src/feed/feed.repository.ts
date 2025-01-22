@@ -3,7 +3,6 @@ import { Feed, FeedView } from './feed.entity';
 import { Injectable } from '@nestjs/common';
 import { QueryFeedDto } from './dto/query-feed.dto';
 import { Cursor, FeedIndex, SearchType } from './dto/search-feed.dto';
-import { getConnectionName } from 'ioredis/built/cluster/util';
 
 @Injectable()
 export class FeedRepository extends Repository<Feed> {
@@ -18,9 +17,7 @@ export class FeedRepository extends Repository<Feed> {
     page: number,
     cursor?: Cursor,
   ): Promise<[Feed[], number, Cursor]> {
-    // console.log(cursor);
     // if (!cursor) {
-    //   console.log("can't find cursor");
     //   return this.searchFeedListByBatch(find, limit, type, page);
     // }
     const offset = cursor
@@ -82,13 +79,14 @@ export class FeedRepository extends Repository<Feed> {
   ): Promise<[Feed[], number, Cursor]> {
     let batchNum = 0;
     const batchSize = 1000;
+    const unfilteredTotal = await this.createQueryBuilder('feed').getCount();
     const total = await this.createQueryBuilder('feed')
       .innerJoinAndSelect('feed.blog', 'rss_accept')
       .where(this.getWhereCondition(type), { find: `%${find}%` })
       .getCount();
     let leftData = limit;
     let feeds = [];
-    while (leftData > 0 && batchNum < total) {
+    while (leftData > 0 && batchNum < unfilteredTotal) {
       const subQuery = this.createQueryBuilder()
         .subQuery()
         .select('feedSub.id', 'id')
@@ -102,7 +100,7 @@ export class FeedRepository extends Repository<Feed> {
         .take(batchSize)
         .getQuery();
       const queryBuilder = this.createQueryBuilder('feed')
-        .innerJoinAndSelect(subQuery, 'feedSub', 'feedSub.id = feed.id')
+        .innerJoin(subQuery, 'feedSub', 'feedSub.id = feed.id')
         .innerJoinAndSelect('feed.blog', 'rss_accept')
         .andWhere(this.getWhereCondition(type), { find: `%${find}%` })
         .orderBy('feed.createdAt', 'DESC')
@@ -124,7 +122,6 @@ export class FeedRepository extends Repository<Feed> {
           )
         : null;
     const resultCursor = new Cursor(page, preIndex, nextIndex);
-    console.log(resultCursor);
     return [feeds, total, resultCursor];
   }
 
