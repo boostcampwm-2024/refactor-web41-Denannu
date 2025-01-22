@@ -57,5 +57,5 @@ jobs:
             docker pull ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx
             docker stop nginx
             docker rm nginx
-            docker run -d --name nginx --network denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx
+            docker run -d --name nginx --network refactor-web41-denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx
             docker image prune -f

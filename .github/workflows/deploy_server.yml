@@ -60,5 +60,5 @@ jobs:
             docker pull ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
             docker stop server
             docker rm server
-            docker run -d --name server --network denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
+            docker run -d --name server --network refactor-web41-denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
             docker image prune -f
