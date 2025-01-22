@@ -19,21 +19,18 @@ export class FeedRepository extends Repository<Feed> {
     cursor?: Cursor,
   ): Promise<[Feed[], number, Cursor]> {
     if (page === 1) {
-      const abortController1 = new AbortController();
-      const abortController2 = new AbortController();
+      const abortControllerForBatch = new AbortController();
       const result = await Promise.race([
-        this.searchFeedListByStandard(
+        this.searchFeedListByStandard(find, limit, type, page, cursor),
+        this.searchFeedListByBatch(
           find,
           limit,
           type,
           page,
-          cursor,
-          abortController1,
+          abortControllerForBatch,
         ),
-        this.searchFeedListByBatch(find, limit, type, page, abortController2),
       ]);
-      abortController1.abort();
-      abortController2.abort();
+      abortControllerForBatch.abort();
       return result;
     }
     return this.searchFeedListByStandard(find, limit, type, page, cursor);
@@ -45,74 +42,56 @@ export class FeedRepository extends Repository<Feed> {
     type: SearchType,
     page: number,
     cursor?: Cursor,
-    abortController?: AbortController,
   ): Promise<[Feed[], number, Cursor]> {
-    const signal = abortController?.signal;
-    try {
-      if (signal) {
-        if (signal.aborted) {
-          throw new Error('search Promise(standard) aborted');
-        }
+    const offset = cursor
+      ? (Math.abs(page - cursor.curPage) - 1) * limit
+      : (page - 1) * limit;
+    const queryBuilder = this.createQueryBuilder('feed')
+      .innerJoinAndSelect('feed.blog', 'rss_accept')
+      .where(this.getWhereCondition(type), { find: `%${find}%` })
+      .orderBy('feed.createdAt', 'DESC')
+      .skip(offset)
+      .take(limit);
 
-        signal.addEventListener('abort', () => {
-          throw new Error('search Promise(standard) aborted');
-        });
+    if (cursor) {
+      if (cursor.curPage < page) {
+        queryBuilder.andWhere(
+          '(feed.createdAt < :createAt or feed.createdAt = :createAt and feed.id > :feedId)',
+          {
+            createAt: cursor.nextIndex.createAt,
+            feedId: cursor.nextIndex.feedId,
+          },
+        );
+      } else if (cursor.curPage > page) {
+        queryBuilder.andWhere(
+          '(feed.createdAt > :createAt or feed.createdAt = :createAt and feed.id < :feedId)',
+          {
+            createAt: cursor.preIndex.createAt,
+            feedId: cursor.preIndex.feedId,
+          },
+        );
+      } else {
+        queryBuilder.andWhere(
+          '(feed.createdAt >= :preCreateAt and feed.createdAt <= :nextCreateAt)',
+          {
+            preCreateAt: cursor.preIndex.createAt,
+            nextCreateAt: cursor.preIndex.feedId,
+          },
+        );
       }
-      const offset = cursor
-        ? (Math.abs(page - cursor.curPage) - 1) * limit
-        : (page - 1) * limit;
-      const queryBuilder = this.createQueryBuilder('feed')
-        .innerJoinAndSelect('feed.blog', 'rss_accept')
-        .where(this.getWhereCondition(type), { find: `%${find}%` })
-        .orderBy('feed.createdAt', 'DESC')
-        .skip(offset)
-        .take(limit);
-
-      if (cursor) {
-        if (cursor.curPage < page) {
-          queryBuilder.andWhere(
-            '(feed.createdAt < :createAt or feed.createdAt = :createAt and feed.id > :feedId)',
-            {
-              createAt: cursor.nextIndex.createAt,
-              feedId: cursor.nextIndex.feedId,
-            },
-          );
-        } else if (cursor.curPage > page) {
-          queryBuilder.andWhere(
-            '(feed.createdAt > :createAt or feed.createdAt = :createAt and feed.id < :feedId)',
-            {
-              createAt: cursor.preIndex.createAt,
-              feedId: cursor.preIndex.feedId,
-            },
-          );
-        } else {
-          queryBuilder.andWhere(
-            '(feed.createdAt >= :preCreateAt and feed.createdAt <= :nextCreateAt)',
-            {
-              preCreateAt: cursor.preIndex.createAt,
-              nextCreateAt: cursor.preIndex.feedId,
-            },
-          );
-        }
-      }
-      const [feeds, total] = await queryBuilder.getManyAndCount();
-      const preIndex =
-        feeds.length > 0
-          ? new FeedIndex(feeds[0].createdAt, feeds[0].id)
-          : null;
-      const nextIndex =
-        feeds.length > 0
-          ? new FeedIndex(
-              feeds[feeds.length - 1].createdAt,
-              feeds[feeds.length - 1].id,
-            )
-          : null;
-      const resultCursor = new Cursor(page, preIndex, nextIndex);
-      return [feeds, total, resultCursor];
-    } catch (e) {
-      if (signal?.aborted) return [null, 0, null];
-      throw e;
     }
+    const [feeds, total] = await queryBuilder.getManyAndCount();
+    const preIndex =
+      feeds.length > 0 ? new FeedIndex(feeds[0].createdAt, feeds[0].id) : null;
+    const nextIndex =
+      feeds.length > 0
+        ? new FeedIndex(
+            feeds[feeds.length - 1].createdAt,
+            feeds[feeds.length - 1].id,
+          )
+        : null;
+    const resultCursor = new Cursor(page, preIndex, nextIndex);
+    return [feeds, total, resultCursor];
   }
 
   private async searchFeedListByBatch(
