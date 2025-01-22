@@ -77,14 +77,38 @@ export class FeedRepository extends Repository<Feed> {
     type: SearchType,
     page: number,
   ): Promise<[Feed[], number, Cursor]> {
-    let batchNum = 0;
-    const batchSize = 1000;
     const unfilteredTotal = await this.createQueryBuilder('feed').getCount();
-    const total = await this.createQueryBuilder('feed')
+    const getTotal = this.createQueryBuilder('feed')
       .innerJoinAndSelect('feed.blog', 'rss_accept')
       .where(this.getWhereCondition(type), { find: `%${find}%` })
       .getCount();
+
+    const [total, feeds] = await Promise.all([
+      getTotal,
+      this.findFeedWhile(find, limit, type, unfilteredTotal),
+    ]);
+    const preIndex =
+      feeds.length > 0 ? new FeedIndex(feeds[0].createdAt, feeds[0].id) : null;
+    const nextIndex =
+      feeds.length > 0
+        ? new FeedIndex(
+            feeds[feeds.length - 1].createdAt,
+            feeds[feeds.length - 1].id,
+          )
+        : null;
+    const resultCursor = new Cursor(page, preIndex, nextIndex);
+    return [feeds, total, resultCursor];
+  }
+
+  private async findFeedWhile(
+    find: string,
+    limit: number,
+    type: SearchType,
+    unfilteredTotal: number,
+  ): Promise<Feed[]> {
     let leftData = limit;
+    let batchNum = 0;
+    const batchSize = 1000;
     let feeds = [];
     while (leftData > 0 && batchNum < unfilteredTotal) {
       const subQuery = this.createQueryBuilder()
@@ -111,18 +135,7 @@ export class FeedRepository extends Repository<Feed> {
       leftData -= tnsCount;
       batchNum += batchSize;
     }
-
-    const preIndex =
-      feeds.length > 0 ? new FeedIndex(feeds[0].createdAt, feeds[0].id) : null;
-    const nextIndex =
-      feeds.length > 0
-        ? new FeedIndex(
-            feeds[feeds.length - 1].createdAt,
-            feeds[feeds.length - 1].id,
-          )
-        : null;
-    const resultCursor = new Cursor(page, preIndex, nextIndex);
-    return [feeds, total, resultCursor];
+    return feeds;
   }
 
   private getWhereCondition(type: string): string {
