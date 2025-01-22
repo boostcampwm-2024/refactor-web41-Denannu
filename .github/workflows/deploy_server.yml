@@ -7,7 +7,7 @@ on:
       - feature/31
     paths:
       - 'server/**'
-  workflow_dispatch: # 수동 실행을 허용하는 이벤트
+  workflow_dispatch:
 
 jobs:
   push_to_registry:
