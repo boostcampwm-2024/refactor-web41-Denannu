@@ -35,8 +35,8 @@ jobs:
           context: .
           file: ./dockerfile.nginx
           push: true
-          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest,
-            ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:${{ github.run_number }}
+          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:${{ secrets.RELEASE_VERSION }},
+            ${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest
           cache-from: type=registry,ref=${{ secrets.NCP_CONTAINER_REGISTRY }}/nginx:latest
           cache-to: type=inline
 

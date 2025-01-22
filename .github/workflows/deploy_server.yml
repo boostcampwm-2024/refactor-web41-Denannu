@@ -38,8 +38,8 @@ jobs:
           context: .
           file: ./dockerfile.server
           push: true
-          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest,
-            ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:${{ github.run_number }}
+          tags: ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:${{ secrets.RELEASE_VERSION }},
+            ${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest
           cache-from: type=registry,ref=${{ secrets.NCP_CONTAINER_REGISTRY }}/server:latest
           cache-to: type=inline
 
