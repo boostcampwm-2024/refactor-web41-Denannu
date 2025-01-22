@@ -6,8 +6,8 @@ interface SearchState {
   currentFilter: FilterType;
   searchParam: string;
   page: number;
-  preData: CursorData["preData"] | null;
-  nextIndex: CursorData["nextIndex"] | null;
+  preIndex: CursorData["preIndex"];
+  nextIndex: CursorData["nextIndex"];
   setFilter: (filter: FilterType) => void;
   setSearchParam: (param: string) => void;
   setPage: (page: number) => void;
@@ -26,24 +26,32 @@ export const useSearchStore = create<SearchState>((set) => ({
   currentFilter: "title",
   searchParam: "",
   page: 1,
-  preData: null,
+  preIndex: null,
   nextIndex: null,
-  setFilter: (currentFilter) => set({ currentFilter }),
-  setSearchParam: (param) =>
+  setFilter: (currentFilter) => {
+    set({ currentFilter });
+  },
+  setSearchParam: (param) => {
     set({
       searchParam: param,
-      preData: null,
+      preIndex: null,
       nextIndex: null,
       page: 1,
-    }),
-  setPage: (page) => set({ page }),
-  setCursor: (cursor) =>
-    set({
-      preData: cursor?.preData || null,
-      nextIndex: cursor?.nextIndex || null,
-    }),
+    });
+  },
+  setPage: (page) => {
+    set({ page });
+  },
+  setCursor: (cursor) => {
+    if (!cursor) return;
+    const newState = {
+      preIndex: cursor.preIndex || null,
+      nextIndex: cursor.nextIndex || null,
+    };
+    set(newState);
+  },
   resetPage: () => set({ page: 1 }),
-  resetParam: () => set({ searchParam: "", preData: null, nextIndex: null }),
+  resetParam: () => set({ searchParam: "", preIndex: null, nextIndex: null }),
   resetFilter: () => set({ currentFilter: "title" }),
 }));
 

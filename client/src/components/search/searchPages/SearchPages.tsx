@@ -10,54 +10,87 @@ import {
 
 import generatePage from "@/utils/pagination";
 
+import { getSearch } from "@/api/services/search";
 import { useSearchStore } from "@/store/useSearchStore";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function SearchPages({ totalPages }: { totalPages: number }) {
-  const { page, setPage, preData, nextIndex, searchParam, currentFilter } = useSearchStore();
+  const { page, setPage, preIndex, nextIndex, searchParam, currentFilter } = useSearchStore();
   const queryClient = useQueryClient();
   const pageNumber = generatePage(page, totalPages);
 
   const handlePage = (mode: number | "prev" | "next") => {
-    const cursor = {
-      curPage: page,
-      preData,
-      nextIndex,
-    };
-
     switch (mode) {
       case "prev":
-        if (preData) {
+        if (preIndex) {
+          const cursor = {
+            curPage: page,
+            preIndex,
+            nextIndex: null,
+          };
           setPage(page - 1);
-          queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10, { ...cursor, nextIndex: null }],
+          queryClient.prefetchQuery({
+            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10],
+            queryFn: () =>
+              getSearch({
+                query: searchParam,
+                filter: currentFilter,
+                page: page - 1,
+                pageSize: 5,
+                cursor,
+              }),
           });
         } else {
           setPage(page - 1);
-          queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page - 1, 10],
-          });
         }
         break;
       case "next":
         if (nextIndex) {
+          const cursor = {
+            curPage: page,
+            preIndex: null,
+            nextIndex,
+          };
           setPage(page + 1);
-          queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10, { ...cursor, preData: null }],
+          queryClient.prefetchQuery({
+            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10],
+            queryFn: () =>
+              getSearch({
+                query: searchParam,
+                filter: currentFilter,
+                page: page + 1,
+                pageSize: 5,
+                cursor,
+              }),
           });
         } else {
           setPage(page + 1);
-          queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, page + 1, 10],
-          });
         }
         break;
       default:
         if (typeof mode === "number") {
+          const cursor =
+            preIndex || nextIndex
+              ? {
+                  curPage: page,
+                  preIndex,
+                  nextIndex,
+                }
+              : undefined;
           setPage(mode);
-          queryClient.invalidateQueries({
-            queryKey: ["getSearch", searchParam, currentFilter, mode, 10, cursor],
-          });
+          if (cursor) {
+            queryClient.prefetchQuery({
+              queryKey: ["getSearch", searchParam, currentFilter, mode, 10],
+              queryFn: () =>
+                getSearch({
+                  query: searchParam,
+                  filter: currentFilter,
+                  page: mode,
+                  pageSize: 5,
+                  cursor,
+                }),
+            });
+          }
         }
     }
   };

@@ -8,7 +8,7 @@ export interface SearchResult {
 
 export interface CursorData {
   curPage: number;
-  preData?: {
+  preIndex?: {
     feedId: number;
     createdAt: string;
   };
