@@ -22,15 +22,14 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
 
-            cd /refactor-web41-denannu
+            cd refactor-web41-Denannu
             git pull origin main
 
             echo "${{ secrets.REDIS_CONF }}" > redis.conf
             docker compose up -d --build redis
 
-            cd server/
+            cd server
 
-            mkdir -p configs
             echo "${{ secrets.ENV_BE_DB}}" > configs/.env.db.production
 
             cd ..
