@@ -1,11 +1,70 @@
-import { Feed } from '../feed.entity';
-import { IsDefined, IsEnum, IsInt, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Feed, FeedView } from '../feed.entity';
+import {
+  IsDate,
+  IsDefined,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type, Transform, plainToClass } from 'class-transformer';
 
 export enum SearchType {
   TITLE = 'title',
   BLOGNAME = 'blogName',
   ALL = 'all',
+}
+
+export class FeedIndex {
+  @IsDate()
+  createAt: Date;
+
+  @IsInt()
+  @Min(1, { message: 'feed index는 1보다 커야합니다.' })
+  @Type(() => Number)
+  feedId: number;
+
+  constructor(createAt: Date, feedId: number) {
+    this.createAt = createAt;
+    this.feedId = feedId;
+  }
+}
+
+export class Cursor {
+  @IsInt({
+    message: 'cursor의 페이지 번호는 정수입니다.',
+  })
+  @Min(1, { message: 'cursor의 페이지 번호는 1보다 커야합니다.' })
+  @Type(() => Number)
+  curPage: number;
+
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return plainToClass(FeedIndex, JSON.parse(value));
+    }
+    return plainToClass(FeedIndex, value);
+  })
+  @ValidateNested()
+  @Type(() => FeedIndex)
+  preIndex: FeedIndex;
+
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return plainToClass(FeedIndex, JSON.parse(value));
+    }
+    return plainToClass(FeedIndex, value);
+  })
+  @ValidateNested()
+  @Type(() => FeedIndex)
+  nextIndex: FeedIndex;
+
+  constructor(curPage: number, preIndex: FeedIndex, nextIndex: FeedIndex) {
+    this.curPage = curPage;
+    this.preIndex = preIndex;
+    this.nextIndex = nextIndex;
+  }
 }
 
 export class SearchFeedReq {
@@ -37,6 +96,21 @@ export class SearchFeedReq {
   @Type(() => Number)
   limit?: number = 4;
 
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsedValue = JSON.parse(value);
+        return plainToClass(Cursor, parsedValue);
+      } catch (error) {
+        throw new Error('Invalid JSON format for cursor');
+      }
+    }
+    return plainToClass(Cursor, value);
+  })
+  @Type(() => Cursor)
+  cursor?: Cursor;
+
   constructor(partial: Partial<SearchFeedReq>) {
     Object.assign(this, partial);
   }
@@ -62,6 +136,18 @@ export class SearchFeedResult {
       );
     });
   }
+
+  static feedViewsToResults(feedViews: FeedView[]): SearchFeedResult[] {
+    return feedViews.map((item) => {
+      return new SearchFeedResult(
+        item.feedId,
+        item.blogName,
+        item.title,
+        item.path,
+        item.createdAt,
+      );
+    });
+  }
 }
 
 export class SearchFeedRes {
@@ -70,5 +156,6 @@ export class SearchFeedRes {
     private result: SearchFeedResult[],
     private totalPages: number,
     private limit: number,
+    private cursor: Cursor,
   ) {}
 }
