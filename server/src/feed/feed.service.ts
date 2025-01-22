@@ -115,7 +115,6 @@ export class FeedService {
 
   async searchFeedList(searchFeedReq: SearchFeedReq) {
     const { find, page, limit, type, cursor } = searchFeedReq;
-    console.log(cursor);
     if (this.validateSearchType(type)) {
       const [result, totalCount, nextCursor] =
         await this.feedRepository.searchFeedList(
