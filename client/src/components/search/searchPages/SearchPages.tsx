@@ -26,7 +26,7 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
           const cursor = {
             curPage: page,
             preIndex,
-            nextIndex: null,
+            nextIndex: undefined,
           };
           setPage(page - 1);
           queryClient.prefetchQuery({
@@ -48,7 +48,7 @@ export default function SearchPages({ totalPages }: { totalPages: number }) {
         if (nextIndex) {
           const cursor = {
             curPage: page,
-            preIndex: null,
+            preIndex: undefined,
             nextIndex,
           };
           setPage(page + 1);
