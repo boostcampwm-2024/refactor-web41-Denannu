@@ -57,7 +57,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             docker pull ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
-            docker stop $(docker ps -a -q)
-            docker rm $(docker ps -a -q)
-            docker run -d --network denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
+            docker stop server
+            docker rm server
+            docker run -d --name server --network denannu_refact41-denannu ${{ secrets.NCP_CONTAINER_REGISTRY }}/server
             docker image prune -f
