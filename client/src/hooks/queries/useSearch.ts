@@ -6,10 +6,11 @@ import { debounce } from "@/utils/debounce";
 
 import { getSearch } from "@/api/services/search";
 import { useSearchStore } from "@/store/useSearchStore";
-import { SearchRequest, SearchResponse, CursorData } from "@/types/search";
-import { useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
+import { SearchRequest, SearchResponse } from "@/types/search";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useSearch = ({ query, filter, page, pageSize, cursor }: SearchRequest & { cursor?: CursorData }) => {
+export const useSearch = (params: SearchRequest) => {
+  const { query, filter, page, pageSize, cursor } = params;
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const queryClient = useQueryClient();
   const { setCursor } = useSearchStore();
@@ -28,22 +29,22 @@ export const useSearch = ({ query, filter, page, pageSize, cursor }: SearchReque
     };
   }, [query]);
 
-  const queryOptions: UseQueryOptions<SearchResponse, Error> = {
-    queryKey: ["getSearch", debouncedQuery, filter, page, pageSize, cursor],
-    queryFn: () =>
-      getSearch({
+  const { data, isLoading, error } = useQuery<SearchResponse, Error>({
+    queryKey: ["getSearch", debouncedQuery, filter, page, pageSize, cursor ? JSON.stringify(cursor) : null],
+    queryFn: async () => {
+      const response = await getSearch({
         query: debouncedQuery,
         filter,
         page,
         pageSize,
         cursor,
-      }),
+      });
+      return response;
+    },
     staleTime: 5 * ONE_MINUTE,
     retry: 1,
     enabled: debouncedQuery.length > 0,
-  };
-
-  const { data, isLoading, error } = useQuery<SearchResponse, Error>(queryOptions);
+  });
 
   useEffect(() => {
     if (data?.data?.cursor) {
@@ -52,8 +53,13 @@ export const useSearch = ({ query, filter, page, pageSize, cursor }: SearchReque
   }, [data, setCursor]);
 
   const refetchSearch = () => {
+    const queryKey = ["getSearch", debouncedQuery, filter, page, pageSize];
+    if (cursor) {
+      queryKey.push(JSON.stringify(cursor));
+    }
     queryClient.invalidateQueries({
-      queryKey: ["getSearch", debouncedQuery, filter, page, pageSize],
+      queryKey: queryKey,
+      refetchType: "active",
     });
   };
 
