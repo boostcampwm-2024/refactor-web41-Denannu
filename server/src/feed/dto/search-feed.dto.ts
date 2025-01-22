@@ -101,12 +101,12 @@ export class SearchFeedReq {
     if (typeof value === 'string') {
       try {
         const parsedValue = JSON.parse(value);
-        return plainToClass(FeedIndex, parsedValue);
+        return plainToClass(Cursor, parsedValue);
       } catch (error) {
         throw new Error('Invalid JSON format for cursor');
       }
     }
-    return plainToClass(FeedIndex, value);
+    return plainToClass(Cursor, value);
   })
   @Type(() => Cursor)
   cursor?: Cursor;
