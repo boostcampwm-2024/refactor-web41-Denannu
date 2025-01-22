@@ -22,9 +22,9 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
 
-            cd /refactor-web41-denannu
+            cd refactor-web41-Denannu
             git pull origin main
-            cd client/
+            cd client
             echo "${{ secrets.ENV_FE}}" > .env
 
             docker compose up -d --build nginx
