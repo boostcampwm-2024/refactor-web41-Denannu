@@ -4,6 +4,17 @@ import { Injectable } from '@nestjs/common';
 import { QueryFeedDto } from './dto/query-feed.dto';
 import { SearchType } from './dto/search-feed.dto';
 
+export interface JoinedFeed {
+  feedId: number;
+  blogName: string;
+  blogPlatform: string;
+  title: string;
+  path: string;
+  createdAt: Date;
+  thumbnail: string;
+  viewCount: number;
+}
+
 @Injectable()
 export class FeedRepository extends Repository<Feed> {
   constructor(private dataSource: DataSource) {
@@ -40,6 +51,23 @@ export class FeedRepository extends Repository<Feed> {
       .limit(limit + 1);
 
     return await query.getRawMany();
+  }
+
+  async findFeedById(feedId: number): Promise<JoinedFeed> {
+    const query = this.createQueryBuilder('f')
+      .select([
+        'f.id AS feedId',
+        'f.title AS title',
+        'f.path AS path',
+        'f.created_at AS createdAt',
+        'f.thumbnail AS thumbnail',
+        'f.view_count AS viewCount',
+        'r.name AS blogName',
+        'r.blog_platform AS blogPlatform',
+      ])
+      .where('f.id = :feedId', { feedId })
+      .innerJoin('rss_accept', 'r', 'f.blog_id = r.id');
+    return await query.getRawOne();
   }
 
   async searchFeedList(

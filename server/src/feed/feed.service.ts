@@ -3,9 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FeedRepository, FeedViewRepository } from './feed.repository';
+import {
+  FeedRepository,
+  FeedViewRepository,
+  JoinedFeed,
+} from './feed.repository';
 import { QueryFeedDto } from './dto/query-feed.dto';
-import { Feed, FeedView } from './feed.entity';
 import {
   FeedPaginationResult,
   FeedPaginationResponseDto,
@@ -46,15 +49,15 @@ export class FeedService {
     return { result, lastId, hasMore };
   }
 
-  private existNextFeed(feedList: FeedView[] | Feed[], limit: number) {
+  private existNextFeed(feedList: JoinedFeed[], limit: number) {
     return feedList.length > limit;
   }
 
-  private getLastIdFromFeedList(feedList: FeedView[]) {
+  private getLastIdFromFeedList(feedList: JoinedFeed[]) {
     return feedList.length ? feedList[feedList.length - 1].feedId : 0;
   }
 
-  private async checkNewFeeds(feedList: FeedView[]) {
+  private async checkNewFeeds(feedList: JoinedFeed[]) {
     const newFeedIds = (
       await this.redisService.redisClient.keys(redisKeys.FEED_RECENT_ALL_KEY)
     ).map((key) => {
@@ -78,7 +81,7 @@ export class FeedService {
     );
     const trendFeeds = await Promise.all(
       trendFeedIdList.map(async (feedId) =>
-        this.feedViewRepository.findFeedById(parseInt(feedId)),
+        this.feedRepository.findFeedById(parseInt(feedId)),
       ),
     );
     return FeedTrendResponseDto.toFeedTrendResponseDtoArray(
