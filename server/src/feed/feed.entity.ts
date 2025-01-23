@@ -59,7 +59,9 @@ export class Feed extends BaseEntity {
     dataSource
       .createQueryBuilder()
       .select()
-      .addSelect('ROW_NUMBER() OVER (ORDER BY feed.created_at) AS order_id')
+      .addSelect(
+        'ROW_NUMBER() OVER (ORDER BY feed.created_at DESC) AS order_id',
+      )
       .addSelect('feed.id', 'feed_id')
       .addSelect('title', 'feed_title')
       .addSelect('feed.path', 'feed_path')
@@ -69,8 +71,7 @@ export class Feed extends BaseEntity {
       .addSelect('rss_accept.name', 'blog_name')
       .addSelect('rss_accept.blog_platform', 'blog_platform')
       .from(Feed, 'feed')
-      .innerJoin(RssAccept, 'rss_accept', 'rss_accept.id = feed.blog_id')
-      .orderBy('feed_created_at'),
+      .innerJoin(RssAccept, 'rss_accept', 'rss_accept.id = feed.blog_id'),
   name: 'feed_view',
 })
 export class FeedView {
