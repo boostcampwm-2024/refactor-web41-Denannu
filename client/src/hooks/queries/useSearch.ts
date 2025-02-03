@@ -29,6 +29,17 @@ export const useSearch = (params: SearchRequest) => {
     };
   }, [query]);
 
+  useEffect(() => {
+    if (debouncedQuery.length > 0) {
+      gtag("event", "search", {
+        event_category: "engagement",
+        event_label: "search_query",
+        search_term: debouncedQuery,
+        filter_type: filter,
+      });
+    }
+  }, [debouncedQuery, filter]);
+
   const { data, isLoading, error } = useQuery<SearchResponse, Error>({
     queryKey: ["getSearch", debouncedQuery, filter, page, pageSize, cursor ? JSON.stringify(cursor) : null],
     queryFn: async () => {
