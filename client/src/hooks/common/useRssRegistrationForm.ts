@@ -32,6 +32,17 @@ export const useRssRegistrationForm = () => {
     return (store.rssUrl || "").replace(prefix, "").replace(suffix, "");
   };
 
+  const handleFormSubmit = () => {
+    if (store.isFormValid()) {
+      gtag("event", "rss_registration", {
+        event_category: "forms",
+        event_label: "rss_submit",
+        platform: platform,
+        blog_platform: platform,
+      });
+    }
+  };
+
   return {
     platform,
     values: {
@@ -56,6 +67,7 @@ export const useRssRegistrationForm = () => {
     formState: {
       isValid: store.isFormValid(),
       reset: store.resetInputs,
+      handleSubmit: handleFormSubmit,
     },
   };
 };
