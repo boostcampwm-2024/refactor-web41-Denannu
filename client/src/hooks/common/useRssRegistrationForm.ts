@@ -9,6 +9,8 @@ import {
 
 import { PLATFORMS, PlatformType } from "@/constants/rss";
 
+import { trackEvent } from "@/utils/analytics";
+
 import { useRegisterModalStore } from "@/store/useRegisterModalStore";
 
 export const useRssRegistrationForm = () => {
@@ -34,7 +36,7 @@ export const useRssRegistrationForm = () => {
 
   const handleFormSubmit = () => {
     if (store.isFormValid()) {
-      gtag("event", "rss_registration", {
+      trackEvent("rss_registration", {
         event_category: "forms",
         event_label: "rss_submit",
         platform: platform,
@@ -52,7 +54,6 @@ export const useRssRegistrationForm = () => {
       email: store.email,
       urlUsername: getUsernameFromUrl(),
     },
-
     handlers: {
       handlePlatformChange,
       handleUsernameChange,
@@ -63,7 +64,6 @@ export const useRssRegistrationForm = () => {
       handleEmail: (value: string) =>
         store.handleInputChange(value, store.setEmail, store.setEmailValid, validateEmail),
     },
-
     formState: {
       isValid: store.isFormValid(),
       reset: store.resetInputs,
