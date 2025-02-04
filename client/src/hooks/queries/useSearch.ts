@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import { ONE_MINUTE } from "@/constants/time";
 
+import { trackEvent } from "@/utils/analytics";
 import { debounce } from "@/utils/debounce";
 
 import { getSearch } from "@/api/services/search";
@@ -31,7 +32,7 @@ export const useSearch = (params: SearchRequest) => {
 
   useEffect(() => {
     if (debouncedQuery.length > 0) {
-      gtag("event", "search", {
+      trackEvent("search", {
         event_category: "engagement",
         event_label: "search_query",
         search_term: debouncedQuery,
