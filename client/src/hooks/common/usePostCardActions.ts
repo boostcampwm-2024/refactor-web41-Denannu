@@ -1,5 +1,6 @@
 import { usePostViewIncrement } from "@/hooks/queries/usePostViewIncrement";
 
+import { trackEvent } from "@/utils/analytics";
 import { pipe } from "@/utils/pipe";
 
 import { Post } from "@/types/post";
@@ -13,7 +14,7 @@ export const usePostCardActions = (post: Post) => {
   const { mutate } = usePostViewIncrement(post.id);
 
   const openPost = ({ post }: Pick<PostWithState, "post">): PostWithState => {
-    gtag("event", "post_click", {
+    trackEvent("post_click", {
       event_category: "content",
       event_label: "post_open",
       post_id: post.id,
@@ -31,7 +32,7 @@ export const usePostCardActions = (post: Post) => {
 
   const incrementView = ({ post, isWindowOpened }: PostWithState): PostWithState => {
     if (isWindowOpened) {
-      gtag("event", "post_view", {
+      trackEvent("post_view", {
         event_category: "engagement",
         event_label: "view_increment",
         post_id: post.id,
