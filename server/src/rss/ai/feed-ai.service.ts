@@ -9,7 +9,7 @@ export class FeedAIService {
   private URL: URL;
   private headers;
   private prompt;
-  static limitLength = 100;
+  static limitLength = 120;
   static reReqCount = 5;
 
   constructor(private readonly configService: ConfigService) {
@@ -45,7 +45,7 @@ export class FeedAIService {
         ],
         topP: 0.6,
         topK: 0,
-        maxTokens: 30,
+        maxTokens: 35,
         temperature: 0.1,
         repeatPenalty: 2.0,
         stopBefore: [],
@@ -112,6 +112,9 @@ export class FeedAIService {
             const parsedData = JSON.parse(jsonString);
             if (parsedData.content) {
               accumulatedText = parsedData.content.trim();
+
+              const lastDotIndex = accumulatedText.lastIndexOf('.');
+              accumulatedText = accumulatedText.substring(0, lastDotIndex + 1);
             }
           } catch (error) {
             console.error('JSON 파싱 실패:', error);
