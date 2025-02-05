@@ -43,7 +43,7 @@ export class FeedCrawlerService {
 
     return await Promise.all(
       objFromXml.rss.channel.item.map(async (feed) => {
-        this.feedAI.findImpactfulMessageByFeed(feed.description);
+        this.feedAI.summaryFeed(feed.description);
         const date = new Date(feed.pubDate);
         const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
         const thumbnail = await this.rssParser.getThumbnailUrl(feed.link);

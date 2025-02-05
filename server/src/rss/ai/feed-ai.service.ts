@@ -1,41 +1,107 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
 export class FeedAIService {
-  async findImpactfulMessageByFeed(feedData: String) {
-    const API_KEY = 'nv-f7ef7973181443efa0cf781646d54435fOB2';
-    const URL =
-      'https://clovastudio.stream.ntruss.com/testapp/v1/api-tools/summarization/v2';
+  private API_KEY: String;
+  private CLOVASTUDIO_REQUEST_ID: String;
+  private URL: URL;
+  private headers;
+  private prompt;
 
-    const callClovaLLM = async (feedData) => {
-      try {
-        const body = {
-          texts: [
-            "문서: 뒤의 문자열들을 홍보하는 요약 메세지를 50자 이내로로 작성해줘. 요약은 '~~에 대해서 설명하는 글입니다.' 형태로 하되 주어지는 문자열들은 XML 형태야. 문서:" +
-              feedData,
-          ],
-          segMinSize: 300,
-          includeAiFilters: true,
-          autoSentenceSplitter: true,
-          segCount: 2,
-        };
-        const response = await fetch(URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${API_KEY}`, // 발급받은 API 키를 입력
-            'X-NCP-CLOVASTUDIO-REQUEST-ID': 'e2dab9d0ca3c471caf107098ec40ecd2', // 유일한 요청 ID
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('응답 데이터:', data);
-      } catch (error) {
-        console.error('에러 발생:', error);
-      }
+  constructor(private readonly configService: ConfigService) {
+    this.API_KEY = this.configService.get<string>('API_KEY');
+    this.CLOVASTUDIO_REQUEST_ID = this.configService.get<string>(
+      'CLOVASTUDIO_REQUEST_ID',
+    );
+    this.headers = {
+      Authorization: `Bearer ${this.API_KEY}`,
+      'X-NCP-CLOVASTUDIO-REQUEST-ID': `${this.CLOVASTUDIO_REQUEST_ID}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
     };
-    await callClovaLLM(feedData);
+    this.URL = this.configService.get<URL>('CLOVASTUDIO_URL');
+    this.prompt = {
+      role: 'system',
+      content: `- 당신은 텍스트 요약 어시스턴트입니다.
+- 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출하여 50자 이하 요약을 제공합니다.
+- 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세한 부분은 요약에 포함되면 안됩니다.
+- 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
+    };
+  }
+
+  async summaryFeed(feedData: String) {
+    try {
+      const body = {
+        messages: [
+          this.prompt,
+          {
+            role: 'assistant',
+            content: feedData,
+          },
+        ],
+        topP: 0.6,
+        topK: 0,
+        maxTokens: 256,
+        temperature: 0.1,
+        repeatPenalty: 2.0,
+        stopBefore: [],
+        includeAiFilters: true,
+        seed: 0,
+      };
+
+      const response = await fetch(this.URL, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error('응답 스트림이 없습니다.');
+      }
+      const accumulatedText = await this.filterResponse(response);
+      console.log('응답 데이터:', accumulatedText);
+      return accumulatedText;
+    } catch (error) {
+      console.error('에러 발생:', error);
+      return '';
+    }
+  }
+
+  async filterResponse(response: Response) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let accumulatedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const isResult = chunk.match(/event:result/g);
+      if (!isResult) continue;
+      const dataMatches = chunk.match(/data:\s*(\{.*?\})/g);
+
+      if (dataMatches) {
+        dataMatches.forEach((data) => {
+          try {
+            const jsonString = data.replace('data:', '').trim() + '}';
+            const parsedData = JSON.parse(jsonString);
+            if (parsedData.message?.content) {
+              accumulatedText += parsedData.message.content;
+            }
+          } catch (error) {
+            console.error('JSON 파싱 실패:', error);
+          }
+        });
+      }
+    }
+
+    return accumulatedText;
   }
 }
