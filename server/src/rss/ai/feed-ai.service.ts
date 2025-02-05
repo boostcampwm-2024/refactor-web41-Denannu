@@ -49,23 +49,32 @@ export class FeedAIService {
         includeAiFilters: true,
         seed: 0,
       };
+      let count = 0;
+      let resLength = -1;
+      let result = '';
+      while ((resLength < 0 || resLength > 50) && count < 5) {
+        const response = await fetch(this.URL, {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify(body),
+        });
 
-      const response = await fetch(this.URL, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(body),
-      });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.body) {
+          throw new Error('응답 스트림이 없습니다.');
+        }
+        result = await this.filterResponse(response);
+        resLength = result.length;
+        count++;
       }
-
-      if (!response.body) {
-        throw new Error('응답 스트림이 없습니다.');
+      if (resLength > 50) {
+        result = '요약 데이터가 유효하지 않습니다.';
       }
-      const accumulatedText = await this.filterResponse(response);
-      console.log('응답 데이터:', accumulatedText);
-      return accumulatedText;
+      console.log('응답 데이터:', result);
+      return result;
     } catch (error) {
       console.error('에러 발생:', error);
       return '';
@@ -85,15 +94,15 @@ export class FeedAIService {
       const chunk = decoder.decode(value, { stream: true });
       const isResult = chunk.match(/event:result/g);
       if (!isResult) continue;
-      const dataMatches = chunk.match(/data:\s*(\{.*?\})/g);
+      const dataMatches = chunk.match(/\"message\":\s*(\{.*?\})/g);
 
       if (dataMatches) {
         dataMatches.forEach((data) => {
           try {
-            const jsonString = data.replace('data:', '').trim() + '}';
+            const jsonString = data.replace('"message":', '').trim();
             const parsedData = JSON.parse(jsonString);
-            if (parsedData.message?.content) {
-              accumulatedText += parsedData.message.content;
+            if (parsedData.content) {
+              accumulatedText += parsedData.content;
             }
           } catch (error) {
             console.error('JSON 파싱 실패:', error);
