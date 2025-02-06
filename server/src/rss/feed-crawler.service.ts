@@ -4,7 +4,7 @@ import { FeedRepository } from '../feed/feed.repository';
 import { RssParserService } from './rss-parser.service';
 import { RssAccept } from './rss.entity';
 import { Feed } from '../feed/feed.entity';
-import { AIService } from '../ai/ai.service';
+import { AIService, AIType } from '../ai/ai.service';
 
 @Injectable()
 export class FeedCrawlerService {
@@ -43,7 +43,7 @@ export class FeedCrawlerService {
 
     return await Promise.all(
       objFromXml.rss.channel.item.map(async (feed) => {
-        this.feedAI.summaryFeed(feed.description);
+        this.feedAI.postAIReq(AIType.Summary, feed.description);
         const date = new Date(feed.pubDate);
         const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
         const thumbnail = await this.rssParser.getThumbnailUrl(feed.link);

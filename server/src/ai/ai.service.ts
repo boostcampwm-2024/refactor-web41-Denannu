@@ -2,65 +2,89 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { delay } from 'rxjs/operators';
 
+export enum AIType {
+  Summary,
+}
+
 @Injectable()
 export class AIService {
-  private API_KEY: String;
-  private CLOVASTUDIO_REQUEST_ID: String;
-  private URL: URL;
-  private headers;
-  private prompt;
-  static limitLength = 120;
+  private summaryConfig: AINeed;
   static reReqCount = 5;
+  static summaryMaxLength = 120;
 
   constructor(private readonly configService: ConfigService) {
-    this.API_KEY = this.configService.get<string>('API_KEY');
-    this.CLOVASTUDIO_REQUEST_ID = this.configService.get<string>(
-      'CLOVASTUDIO_REQUEST_ID',
-    );
-    this.headers = {
-      Authorization: `Bearer ${this.API_KEY}`,
-      'X-NCP-CLOVASTUDIO-REQUEST-ID': `${this.CLOVASTUDIO_REQUEST_ID}`,
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-    };
-    this.URL = this.configService.get<URL>('CLOVASTUDIO_URL');
-    this.prompt = {
-      role: 'system',
-      content: `- 당신은 반드시 ${AIService.limitLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
-- 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출합니다.
-- 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
-- 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
+    this.initSummary();
+  }
+
+  initSummary() {
+    this.summaryConfig = {
+      API_KEY: this.configService.get<string>('API_KEY'),
+      CLOVASTUDIO_REQUEST_ID: this.configService.get<string>(
+        'CLOVASTUDIO_REQUEST_ID_SUMMARY',
+      ),
+      URL: this.configService.get<URL>('CLOVASTUDIO_URL_SUMMARY'),
+      LIMITLENGTH: AIService.summaryMaxLength,
+      PROMPT: {
+        role: 'system',
+        content: `- 당신은 반드시 ${AIService.summaryMaxLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
+  - 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출합니다.
+  - 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
+  - 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
+      },
     };
   }
 
-  async summaryFeed(feedData: String) {
+  getConfigByType(type: AIType) {
+    if (type == AIType.Summary) return this.summaryConfig;
+    else return null;
+  }
+
+  getHeader(type: AIType) {
+    const AIConfig = this.getConfigByType(type);
+    if (!AIConfig) return null;
+    return {
+      Authorization: `Bearer ${AIConfig.API_KEY}`,
+      'X-NCP-CLOVASTUDIO-REQUEST-ID': `${AIConfig.CLOVASTUDIO_REQUEST_ID}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    };
+  }
+
+  getBody(type: AIType, feedData: String) {
+    const AIConfig = this.getConfigByType(type);
+    if (!AIConfig) return null;
+    return {
+      messages: [
+        AIConfig.PROMPT,
+        {
+          role: 'assistant',
+          content: feedData,
+        },
+      ],
+      topP: 0.6,
+      topK: 0,
+      maxTokens: 35,
+      temperature: 0.1,
+      repeatPenalty: 2.0,
+      stopBefore: [],
+      includeAiFilters: true,
+    };
+  }
+
+  async postAIReq(type: AIType, feedData: String) {
     try {
-      const body = {
-        messages: [
-          this.prompt,
-          {
-            role: 'assistant',
-            content: feedData,
-          },
-        ],
-        topP: 0.6,
-        topK: 0,
-        maxTokens: 35,
-        temperature: 0.1,
-        repeatPenalty: 2.0,
-        stopBefore: [],
-        includeAiFilters: true,
-      };
+      const AIConfig = this.getConfigByType(type);
+      const body = this.getBody(type, feedData);
       let count = 0;
       let resLength = -1;
       let result = '';
       while (
-        (resLength <= 0 || resLength > AIService.limitLength) &&
+        (resLength <= 0 || resLength > AIConfig.LIMITLENGTH) &&
         count < AIService.reReqCount
       ) {
-        const response = await fetch(this.URL, {
+        const response = await fetch(AIConfig.URL, {
           method: 'POST',
-          headers: this.headers,
+          headers: this.getHeader(AIType.Summary),
           body: JSON.stringify(body),
         });
         if (response.status === 429) {
@@ -79,7 +103,7 @@ export class AIService {
         resLength = result.length;
         count++;
       }
-      if (resLength > AIService.limitLength || resLength <= 0) {
+      if (resLength > AIConfig.LIMITLENGTH || resLength <= 0) {
         result = '요약 데이터가 유효하지 않습니다.';
       }
       //console.log('응답 데이터:', result);
@@ -97,7 +121,6 @@ export class AIService {
 
     while (true) {
       const { done, value } = await reader.read();
-
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
