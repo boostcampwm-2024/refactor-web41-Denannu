@@ -82,6 +82,7 @@ export class AIService {
           headers: this.getHeader(AIType.Summary),
           body: JSON.stringify(body),
         });
+
         if (response.status === 429) {
           console.warn('Rate limit 초과. 재시도 중...');
           await delay(500);
@@ -90,11 +91,11 @@ export class AIService {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         if (!response.body) {
           throw new Error('응답 스트림이 없습니다.');
         }
-        result = await this.filterResponse(response);
+
+        result = await this.filterResponse(type, response);
         resLength = result.length;
         count++;
       }
@@ -109,7 +110,14 @@ export class AIService {
     }
   }
 
-  async filterResponse(response: Response) {
+  filterResponse(type: AIType, response: Response) {
+    if (type == AIType.Summary) {
+      return this.summaryResFilter(response);
+    }
+    return '';
+  }
+
+  async summaryResFilter(response: Response) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
