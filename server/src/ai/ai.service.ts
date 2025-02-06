@@ -6,6 +6,8 @@ export enum AIType {
   Summary,
 }
 
+const contentMaxLength = 7600;
+
 @Injectable()
 export class AIService {
   private summaryConfig: AINeed;
@@ -71,10 +73,17 @@ export class AIService {
     };
   }
 
+  cutContent(feedData: String) {
+    return feedData.length < contentMaxLength
+      ? feedData
+      : feedData.substring(0, contentMaxLength);
+  }
+
   async postAIReq(type: AIType, feedData: String) {
     try {
       const AIConfig = this.getConfigByType(type);
-      const body = this.getBody(type, feedData);
+      const cutData = this.cutContent(feedData);
+      const body = this.getBody(type, cutData);
       let count = 0;
       let resLength = -1;
       let result = '';
