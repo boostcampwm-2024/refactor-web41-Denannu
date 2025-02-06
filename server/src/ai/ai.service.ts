@@ -49,13 +49,13 @@ export class AIService {
           content: feedData,
         },
       ],
-      topP: 0.6,
-      topK: 0,
-      maxTokens: 35,
-      temperature: 0.1,
-      repeatPenalty: 2.0,
-      stopBefore: [],
-      includeAiFilters: true,
+      topP: AIConfig.TOPP,
+      topK: AIConfig.TOPK,
+      maxTokens: AIConfig.MAXTOKENS,
+      temperature: AIConfig.TEMPERATURE,
+      repeatPenalty: AIConfig.REPEATPENALTY,
+      stopBefore: AIConfig.STOPBEFORE,
+      includeAiFilters: AIConfig.INCLUDEAIFILTERS,
     };
   }
 

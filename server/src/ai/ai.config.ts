@@ -9,6 +9,13 @@ export interface AIConfig {
     role: string;
     content: string;
   };
+  TOPP: number;
+  TOPK: number;
+  MAXTOKENS: number;
+  TEMPERATURE: number;
+  REPEATPENALTY: number;
+  STOPBEFORE: Array<String>;
+  INCLUDEAIFILTERS: true;
 }
 
 export const AISummaryConfig = (
@@ -28,4 +35,11 @@ export const AISummaryConfig = (
   - 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
   - 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
   },
+  TOPP: 0.6,
+  TOPK: 0,
+  MAXTOKENS: 35,
+  TEMPERATURE: 0.1,
+  REPEATPENALTY: 2.0,
+  STOPBEFORE: [],
+  INCLUDEAIFILTERS: true,
 });
