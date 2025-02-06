@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { delay } from 'rxjs/operators';
+import { AIConfig, AISummaryConfig } from './ai.config';
 
 export enum AIType {
   Summary,
@@ -10,30 +11,15 @@ const contentMaxLength = 7600;
 
 @Injectable()
 export class AIService {
-  private summaryConfig: AINeed;
+  private summaryConfig: AIConfig;
   static reReqCount = 5;
   static summaryMaxLength = 120;
 
   constructor(private readonly configService: ConfigService) {
-    this.initSummary();
-  }
-
-  initSummary() {
-    this.summaryConfig = {
-      API_KEY: this.configService.get<string>('API_KEY'),
-      CLOVASTUDIO_REQUEST_ID: this.configService.get<string>(
-        'CLOVASTUDIO_REQUEST_ID_SUMMARY',
-      ),
-      URL: this.configService.get<URL>('CLOVASTUDIO_URL_SUMMARY'),
-      LIMITLENGTH: AIService.summaryMaxLength,
-      PROMPT: {
-        role: 'system',
-        content: `- 당신은 반드시 ${AIService.summaryMaxLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
-  - 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출합니다.
-  - 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
-  - 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
-      },
-    };
+    this.summaryConfig = AISummaryConfig(
+      this.configService,
+      AIService.summaryMaxLength,
+    );
   }
 
   getConfigByType(type: AIType) {
@@ -115,7 +101,7 @@ export class AIService {
       if (resLength > AIConfig.LIMITLENGTH || resLength <= 0) {
         result = '요약 데이터가 유효하지 않습니다.';
       }
-      //console.log('응답 데이터:', result);
+      console.log('응답 데이터:', result);
       return result;
     } catch (error) {
       console.error('에러 발생:', error);
