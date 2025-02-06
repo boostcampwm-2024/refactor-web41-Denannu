@@ -82,7 +82,7 @@ export class FeedAIService {
       if (resLength > FeedAIService.limitLength || resLength <= 0) {
         result = '요약 데이터가 유효하지 않습니다.';
       }
-      console.log('응답 데이터:', result);
+      //console.log('응답 데이터:', result);
       return result;
     } catch (error) {
       console.error('에러 발생:', error);
