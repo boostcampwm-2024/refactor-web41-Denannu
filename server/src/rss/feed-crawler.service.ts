@@ -4,14 +4,14 @@ import { FeedRepository } from '../feed/feed.repository';
 import { RssParserService } from './rss-parser.service';
 import { RssAccept } from './rss.entity';
 import { Feed } from '../feed/feed.entity';
-import { FeedAIService } from './ai/feed-ai.service';
+import { AIService } from '../ai/ai.service';
 
 @Injectable()
 export class FeedCrawlerService {
   constructor(
     private readonly feedRepository: FeedRepository,
     private readonly rssParser: RssParserService,
-    private readonly feedAI: FeedAIService,
+    private readonly feedAI: AIService,
   ) {}
 
   async loadRssFeeds(rssUrl: string) {

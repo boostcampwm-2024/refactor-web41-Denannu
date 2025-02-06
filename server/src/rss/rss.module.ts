@@ -10,10 +10,10 @@ import { FeedCrawlerService } from './feed-crawler.service';
 import { FeedRepository } from '../feed/feed.repository';
 import { RssParserService } from './rss-parser.service';
 import { EmailModule } from '../common/email/email.module';
-import { FeedAIService } from './ai/feed-ai.service';
+import { AIModule } from '../ai/ai.module';
 
 @Module({
-  imports: [EmailModule],
+  imports: [EmailModule, AIModule],
   controllers: [RssController],
   providers: [
     RssService,
@@ -23,7 +23,6 @@ import { FeedAIService } from './ai/feed-ai.service';
     RssAcceptRepository,
     RssRejectRepository,
     FeedRepository,
-    FeedAIService,
   ],
 })
 export class RssModule {}

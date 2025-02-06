@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { delay } from 'rxjs/operators';
 
 @Injectable()
-export class FeedAIService {
+export class AIService {
   private API_KEY: String;
   private CLOVASTUDIO_REQUEST_ID: String;
   private URL: URL;
@@ -26,7 +26,7 @@ export class FeedAIService {
     this.URL = this.configService.get<URL>('CLOVASTUDIO_URL');
     this.prompt = {
       role: 'system',
-      content: `- 당신은 반드시 ${FeedAIService.limitLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
+      content: `- 당신은 반드시 ${AIService.limitLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
 - 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출합니다.
 - 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
 - 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
@@ -55,8 +55,8 @@ export class FeedAIService {
       let resLength = -1;
       let result = '';
       while (
-        (resLength <= 0 || resLength > FeedAIService.limitLength) &&
-        count < FeedAIService.reReqCount
+        (resLength <= 0 || resLength > AIService.limitLength) &&
+        count < AIService.reReqCount
       ) {
         const response = await fetch(this.URL, {
           method: 'POST',
@@ -79,7 +79,7 @@ export class FeedAIService {
         resLength = result.length;
         count++;
       }
-      if (resLength > FeedAIService.limitLength || resLength <= 0) {
+      if (resLength > AIService.limitLength || resLength <= 0) {
         result = '요약 데이터가 유효하지 않습니다.';
       }
       //console.log('응답 데이터:', result);
