@@ -1,4 +1,4 @@
-import { FileText, User, PanelBottom } from "lucide-react";
+import { FileText, User, PanelBottom, Tag } from "lucide-react";
 
 import { CommandGroup } from "@/components/ui/command";
 
@@ -18,6 +18,7 @@ export default function FilterButton() {
     { label: "제목", filter: "title", icon: <FileText size={16} /> },
     { label: "블로거", filter: "blogName", icon: <User size={16} /> },
     { label: "블로거 + 제목", filter: "all", icon: <PanelBottom size={16} /> },
+    { label: "태그", filter: "tags", icon: <Tag size={16} /> },
   ];
 
   const getItemClassName = (isActive: boolean) =>
