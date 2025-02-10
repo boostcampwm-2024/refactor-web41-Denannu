@@ -70,9 +70,7 @@ export class FeedCrawlerService {
       const content = this.extractContent(feedUrl, html);
 
       if (!content) {
-        throw new BadRequestException(
-          '피드 내용 크롤링 실패: 내용이 비어 있습니다.',
-        );
+        throw new BadRequestException('내용이 비어 있습니다.');
       }
 
       return content;
@@ -102,7 +100,7 @@ export class FeedCrawlerService {
         content = $('.contents_style').text();
         break;
       case feedUrl.includes('medium'):
-        content = $('.ci.bh.fz.ga.gb.gc').eq(2).text();
+        content = $('section').text();
         break;
       default:
         content = null;
