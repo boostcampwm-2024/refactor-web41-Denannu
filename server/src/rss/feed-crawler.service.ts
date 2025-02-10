@@ -64,28 +64,51 @@ export class FeedCrawlerService {
     if (!feedUrl) {
       throw new BadRequestException('rssUrl이 없습니다.');
     }
+
     try {
-      const res = await axios.get(feedUrl);
-      const html = res.data;
-      const $ = cheerio.load(html);
-
-      let content: string;
-
-      if (feedUrl.includes('velog')) {
-        content = $('.atom-one').eq(0).text();
-      } else if (feedUrl.includes('tistory')) {
-        content = $('.contents_style').text();
-      } else if (feedUrl.includes('medium')) {
-        content = $('.ci.bh.fz.ga.gb.gc').eq(2).text();
-      }
+      const html = await this.fetchHtmlContent(feedUrl);
+      const content = this.extractContent(feedUrl, html);
 
       if (!content) {
-        throw new BadRequestException('크롤링 내용 없음');
+        throw new BadRequestException(
+          '피드 내용 크롤링 실패: 내용이 비어 있습니다.',
+        );
       }
+
       return content;
     } catch (error) {
-      throw new BadRequestException('피드 내용 크롤링 실패');
+      throw new BadRequestException(`피드 내용 크롤링 실패: ${error.message}`);
     }
+  }
+
+  private async fetchHtmlContent(feedUrl: string): Promise<string> {
+    try {
+      const res = await axios.get(feedUrl);
+      return res.data;
+    } catch (error) {
+      throw new Error('HTML 콘텐츠를 가져오는 데 실패했습니다.');
+    }
+  }
+
+  private extractContent(feedUrl: string, html: string): string | null {
+    const $ = cheerio.load(html);
+    let content: string | null = null;
+
+    switch (true) {
+      case feedUrl.includes('velog'):
+        content = $('.atom-one').eq(0).text();
+        break;
+      case feedUrl.includes('tistory'):
+        content = $('.contents_style').text();
+        break;
+      case feedUrl.includes('medium'):
+        content = $('.ci.bh.fz.ga.gb.gc').eq(2).text();
+        break;
+      default:
+        content = null;
+    }
+
+    return content;
   }
 
   private getContentLength(content: string) {
