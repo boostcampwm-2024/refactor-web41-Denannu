@@ -5,6 +5,7 @@ import { CardContent } from "@/components/ui/card";
 
 import { formatDate } from "@/utils/date";
 
+import { PostCardTags } from "./PostCardTags";
 import { Post } from "@/types/post";
 
 interface PostCardContentProps {
@@ -15,6 +16,7 @@ export const PostCardContent = ({ post }: PostCardContentProps) => {
   const [isValidImage, setIsValidImage] = useState<boolean>(true);
   const authorInitial = post.author?.charAt(0)?.toUpperCase() || "?";
   const data = `https://denamu.site/files/${post.blogPlatform}-icon.svg`;
+
   return (
     <CardContent className="p-0">
       <div className="relative -mt-6 ml-4 mb-3">
@@ -38,7 +40,10 @@ export const PostCardContent = ({ post }: PostCardContentProps) => {
         <p className="h-[40px] font-bold text-sm group-hover:text-primary transition-colors line-clamp-2">
           {post.title}
         </p>
-        <p className="text-[10px] text-gray-400 pt-2">{formatDate(post.createdAt)}</p>
+        <div className="flex justify-between items-center pt-2">
+          <p className="text-[10px] text-gray-400">{formatDate(post.createdAt)}</p>
+          <PostCardTags tags={post.tags} />
+        </div>
       </div>
     </CardContent>
   );
