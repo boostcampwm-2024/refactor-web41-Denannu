@@ -5,6 +5,8 @@ import { RssParserService } from './rss-parser.service';
 import { RssAccept } from './rss.entity';
 import { Feed } from '../feed/feed.entity';
 import { AIService, AIType } from '../ai/ai.service';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 @Injectable()
 export class FeedCrawlerService {
@@ -56,5 +58,37 @@ export class FeedCrawlerService {
         };
       }),
     );
+  }
+
+  async crawlingFeedContent(feedUrl: string) {
+    if (!feedUrl) {
+      throw new BadRequestException('rssUrl이 없습니다.');
+    }
+    try {
+      const res = await axios.get(feedUrl);
+      const html = res.data;
+      const $ = cheerio.load(html);
+
+      let content: string;
+
+      if (feedUrl.includes('velog')) {
+        content = $('.atom-one').eq(0).text();
+      } else if (feedUrl.includes('tistory')) {
+        content = $('.contents_style').text();
+      } else if (feedUrl.includes('medium')) {
+        content = $('.ci.bh.fz.ga.gb.gc').eq(2).text();
+      }
+
+      if (!content) {
+        throw new BadRequestException('크롤링 내용 없음');
+      }
+      return content;
+    } catch (error) {
+      throw new BadRequestException('피드 내용 크롤링 실패');
+    }
+  }
+
+  private getContentLength(content: string) {
+    return content.replace('\n', '').length;
   }
 }
