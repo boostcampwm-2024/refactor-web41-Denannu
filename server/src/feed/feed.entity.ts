@@ -5,12 +5,14 @@ import {
   Entity,
   Index,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   ViewColumn,
   ViewEntity,
 } from 'typeorm';
 import { RssAccept } from '../rss/rss.entity';
+import { Tag } from '../tag/tag.entity';
 
 @Entity({ name: 'feed' })
 export class Feed extends BaseEntity {
@@ -45,6 +47,14 @@ export class Feed extends BaseEntity {
   })
   thumbnail: string;
 
+  @Column({
+    length: 255,
+  })
+  summary: string;
+
+  @Column()
+  contentLength: number;
+
   @ManyToOne((type) => RssAccept, (rssAccept) => rssAccept.feeds, {
     nullable: false,
   })
@@ -52,6 +62,9 @@ export class Feed extends BaseEntity {
     name: 'blog_id',
   })
   blog: RssAccept;
+
+  @ManyToMany((type) => Tag, (tag) => tag.feeds)
+  tags: Tag[];
 }
 
 @ViewEntity({
