@@ -39,4 +39,4 @@ export interface SearchRequest {
   cursor?: CursorData;
 }
 
-export type FilterType = "title" | "blogName" | "all";
+export type FilterType = "title" | "blogName" | "all" | "tags";
