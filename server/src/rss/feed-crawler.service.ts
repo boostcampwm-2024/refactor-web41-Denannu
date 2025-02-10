@@ -5,6 +5,8 @@ import { RssParserService } from './rss-parser.service';
 import { RssAccept } from './rss.entity';
 import { Feed } from '../feed/feed.entity';
 import { AIService, AIType } from '../ai/ai.service';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 @Injectable()
 export class FeedCrawlerService {
@@ -56,5 +58,58 @@ export class FeedCrawlerService {
         };
       }),
     );
+  }
+
+  async crawlingFeedContent(feedUrl: string) {
+    if (!feedUrl) {
+      throw new BadRequestException('rssUrl이 없습니다.');
+    }
+
+    try {
+      const html = await this.fetchHtmlContent(feedUrl);
+      const content = this.extractContent(feedUrl, html);
+
+      if (!content) {
+        throw new BadRequestException('내용이 비어 있습니다.');
+      }
+
+      return content;
+    } catch (error) {
+      throw new BadRequestException(`피드 내용 크롤링 실패: ${error.message}`);
+    }
+  }
+
+  private async fetchHtmlContent(feedUrl: string): Promise<string> {
+    try {
+      const res = await axios.get(feedUrl);
+      return res.data;
+    } catch (error) {
+      throw new Error('HTML 콘텐츠를 가져오는 데 실패했습니다.');
+    }
+  }
+
+  private extractContent(feedUrl: string, html: string): string | null {
+    const $ = cheerio.load(html);
+    let content: string | null = null;
+
+    switch (true) {
+      case feedUrl.includes('velog'):
+        content = $('.atom-one').eq(0).text();
+        break;
+      case feedUrl.includes('tistory'):
+        content = $('.contents_style').text();
+        break;
+      case feedUrl.includes('medium'):
+        content = $('section').text();
+        break;
+      default:
+        content = null;
+    }
+
+    return content;
+  }
+
+  private getContentLength(content: string) {
+    return content.replace('\n', '').length;
   }
 }
