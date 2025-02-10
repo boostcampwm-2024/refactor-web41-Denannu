@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import { ONE_MINUTE } from "@/constants/time";
 
+import { trackEvent } from "@/utils/analytics";
 import { debounce } from "@/utils/debounce";
 
 import { getSearch } from "@/api/services/search";
@@ -28,6 +29,17 @@ export const useSearch = (params: SearchRequest) => {
       }
     };
   }, [query]);
+
+  useEffect(() => {
+    if (debouncedQuery.length > 0) {
+      trackEvent("search", {
+        event_category: "engagement",
+        event_label: "search_query",
+        search_term: debouncedQuery,
+        filter_type: filter,
+      });
+    }
+  }, [debouncedQuery, filter]);
 
   const { data, isLoading, error } = useQuery<SearchResponse, Error>({
     queryKey: ["getSearch", debouncedQuery, filter, page, pageSize, cursor ? JSON.stringify(cursor) : null],
