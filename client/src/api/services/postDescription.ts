@@ -9,7 +9,7 @@ interface PostSummaryResponse {
 }
 
 export const postDescription = {
-  getSummary: async (feedId: number): Promise<string> => {
+  getSummary: async (feedId: number): Promise<string | null> => {
     try {
       const response = await axiosInstance.get<PostSummaryResponse>(`/api/feed/ai/summary`, {
         params: {
