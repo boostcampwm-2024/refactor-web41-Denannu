@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Feed } from '../feed/feed.entity';
 
 @Entity()
@@ -7,6 +13,7 @@ export class Tag {
   id: number;
 
   @Column()
+  @Index()
   name: string;
 
   @ManyToMany(() => Feed, (feed) => feed.tags)
