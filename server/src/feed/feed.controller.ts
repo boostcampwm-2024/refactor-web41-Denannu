@@ -27,6 +27,7 @@ import { ApiSearchFeedList } from './api-docs/searchFeedList.api-docs';
 import { ApiUpdateFeedViewCount } from './api-docs/updateFeedViewCount.api-docs';
 import { ApiReadRecentFeedList } from './api-docs/readRecentFeedList.api-docs';
 import { Feed } from './feed.entity';
+import { ApiGetFeedSummary } from './api-docs/getFeedSummary.api-docs';
 
 @ApiTags('Feed')
 @Controller('feed')
@@ -113,6 +114,7 @@ export class FeedController {
     );
   }
 
+  @ApiGetFeedSummary()
   @Get('/ai/summary')
   @HttpCode(HttpStatus.OK)
   async getFeedSummary(@Query('feedId', ParseIntPipe) feedId: number) {
