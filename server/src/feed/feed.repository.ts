@@ -106,8 +106,16 @@ export class FeedRepository extends Repository<Feed> {
     const offset = cursor
       ? (Math.abs(page - cursor.curPage) - 1) * limit
       : (page - 1) * limit;
-    const queryBuilder = this.createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.blog', 'rss_accept')
+    const queryBuilder = this.createQueryBuilder('feed').innerJoinAndSelect(
+      'feed.blog',
+      'rss_accept',
+    );
+
+    if (type === 'tag') {
+      queryBuilder.innerJoin('feed.tags', 'tag');
+    }
+
+    queryBuilder
       .where(this.getWhereCondition(type), { find: `%${find}%` })
       .orderBy('feed.createdAt', 'DESC')
       .skip(offset)
@@ -163,8 +171,16 @@ export class FeedRepository extends Repository<Feed> {
   ): Promise<[Feed[], number, Cursor]> {
     try {
       const unfilteredTotal = await this.createQueryBuilder('feed').getCount();
-      const getTotal = this.createQueryBuilder('feed')
-        .innerJoinAndSelect('feed.blog', 'rss_accept')
+      const qb = this.createQueryBuilder('feed').innerJoinAndSelect(
+        'feed.blog',
+        'rss_accept',
+      );
+
+      if (type === 'tag') {
+        qb.innerJoin('feed.tags', 'tag');
+      }
+
+      const getTotal = qb
         .where(this.getWhereCondition(type), { find: `%${find}%` })
         .getCount();
 
@@ -221,7 +237,13 @@ export class FeedRepository extends Repository<Feed> {
         .getQuery();
       const queryBuilder = this.createQueryBuilder('feed')
         .innerJoin(subQuery, 'feedSub', 'feedSub.id = feed.id')
-        .innerJoinAndSelect('feed.blog', 'rss_accept')
+        .innerJoinAndSelect('feed.blog', 'rss_accept');
+
+      if (type === 'tag') {
+        queryBuilder.innerJoin('feed.tags', 'tag');
+      }
+
+      queryBuilder
         .andWhere(this.getWhereCondition(type), { find: `%${find}%` })
         .orderBy('feed.createdAt', 'DESC')
         .take(leftData);
@@ -242,6 +264,8 @@ export class FeedRepository extends Repository<Feed> {
         return 'rss_accept.name LIKE :find';
       case 'all':
         return '(feed.title LIKE :find OR rss_accept.name LIKE :find)';
+      case 'tag':
+        return 'tag.name LIKE :find';
     }
   }
 

@@ -144,6 +144,7 @@ export class FeedService {
     const searchType = {
       title: 'title',
       blogName: 'blogName',
+      tag: 'tag',
       all: 'all',
     };
 
