@@ -46,7 +46,10 @@ export class FeedCrawlerService {
     return await Promise.all(
       objFromXml.rss.channel.item.map(async (feed) => {
         const testContent = await this.crawlingFeedContent(feed.link);
-        const summary = this.feedAI.postAIReq(AIType.Summary, testContent);
+        const summary = await this.feedAI.postAIReq(
+          AIType.Summary,
+          testContent,
+        );
         const date = new Date(feed.pubDate);
         const contentLength = this.getContentLength(testContent);
         const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
