@@ -31,13 +31,13 @@ export const AISummaryConfig = (
   PROMPT: {
     role: 'system',
     content: `- 당신은 반드시 ${summaryMaxLength} 글자 미만의 요약을 제공하는 텍스트 요약 어시스턴트입니다.
-  - 주어진 XML 형태의 텍스트를 분석하고 핵심 주제를 추출합니다.
-  - 이 글에 대한 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
+  - 주어진 텍스트를 분석하고 핵심 주제를 추출하여 요약합니다.
+  - 요약은 해당 글을 홍보하고자 하는 목적으로 사용되며, 내부 내용에 대한 상세 사항은 응답에 포함되면 안됩니다.
   - 답변 형태 : ~~~한 주제에 대해 다루고 있는 포스트입니다.`,
   },
   TOPP: 0.6,
   TOPK: 0,
-  MAXTOKENS: 35,
+  MAXTOKENS: 120,
   TEMPERATURE: 0.1,
   REPEATPENALTY: 2.0,
   STOPBEFORE: [],
