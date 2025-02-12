@@ -8,17 +8,19 @@ export enum AIType {
 }
 
 const contentMaxLength = 7600;
+const summaryMaxLength = 120;
+const summaryContentMinLength = 120;
 
 @Injectable()
 export class AIService {
   private summaryConfig: AIConfig;
   static reReqCount = 5;
-  static summaryMaxLength = 120;
 
   constructor(private readonly configService: ConfigService) {
     this.summaryConfig = AISummaryConfig(
       this.configService,
-      AIService.summaryMaxLength,
+      summaryMaxLength,
+      summaryContentMinLength,
     );
   }
 
@@ -59,16 +61,17 @@ export class AIService {
     };
   }
 
-  cutContent(feedData: String) {
-    return feedData.length < contentMaxLength
-      ? feedData
-      : feedData.substring(0, contentMaxLength);
+  cutContent(feedData: string, length: number) {
+    return feedData.length < length ? feedData : feedData.substring(0, length);
   }
 
-  async postAIReq(type: AIType, feedData: String) {
+  async postAIReq(type: AIType, feedData: string) {
     try {
       const AIConfig = this.getConfigByType(type);
-      const cutData = this.cutContent(feedData);
+      if (feedData.length < AIConfig.MIN_CONTENT_LENGTH) {
+        return '';
+      }
+      const cutData = this.cutContent(feedData, contentMaxLength);
       const body = this.getBody(type, cutData);
       let count = 0;
       let resLength = -1;
@@ -100,18 +103,18 @@ export class AIService {
         count++;
       }
       if (resLength > AIConfig.LIMITLENGTH || resLength <= 0) {
-        result = '요약 데이터가 유효하지 않습니다.';
+        throw new Error('유효하지 않은 응답 데이터입니다.');
       }
       return result;
     } catch (error) {
       console.error('에러 발생:', error);
-      return '';
+      return 'FAILED';
     }
   }
 
-  filterResponse(type: AIType, response: Response) {
+  async filterResponse(type: AIType, response: Response) {
     if (type == AIType.Summary) {
-      return this.summaryResFilter(response);
+      return await this.summaryResFilter(response);
     }
     return '';
   }
@@ -124,20 +127,20 @@ export class AIService {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       const chunk = decoder.decode(value, { stream: true });
       const isResult = chunk.match(/event:result/g);
       if (!isResult) continue;
       const dataMatches = chunk.match(/\"message\":\s*(\{.*?\})/g);
-
       if (dataMatches) {
         dataMatches.forEach((data) => {
           try {
             const jsonString = data.replace('"message":', '').trim();
             const parsedData = JSON.parse(jsonString);
             if (parsedData.content) {
-              accumulatedText = parsedData.content.trim();
-
+              accumulatedText = this.cutContent(
+                parsedData.content.trim(),
+                this.summaryConfig.LIMITLENGTH,
+              );
               const lastDotIndex = accumulatedText.lastIndexOf('.');
               accumulatedText = accumulatedText.substring(0, lastDotIndex + 1);
             }

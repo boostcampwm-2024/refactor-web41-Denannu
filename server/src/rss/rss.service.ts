@@ -74,6 +74,8 @@ export class RssService {
         const feeds = await this.feedCrawlerService.loadRssFeeds(
           newRssAccept.rssUrl,
         );
+        //tag 기능이 없어서 빈 배열로 넣었습니다.
+        feeds.forEach((feed) => (feed.tags = []));
         feeds.forEach((feed) => (feed.blog = newRssAccept));
         return [newRssAccept, feeds];
       },

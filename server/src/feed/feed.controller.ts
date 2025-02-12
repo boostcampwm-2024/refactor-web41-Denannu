@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -26,6 +27,7 @@ import { ApiSearchFeedList } from './api-docs/searchFeedList.api-docs';
 import { ApiUpdateFeedViewCount } from './api-docs/updateFeedViewCount.api-docs';
 import { ApiReadRecentFeedList } from './api-docs/readRecentFeedList.api-docs';
 import { Feed } from './feed.entity';
+import { ApiGetFeedSummary } from './api-docs/getFeedSummary.api-docs';
 
 @ApiTags('Feed')
 @Controller('feed')
@@ -110,5 +112,16 @@ export class FeedController {
       '최신 피드 업데이트 완료',
       await this.feedService.readRecentFeedList(),
     );
+  }
+
+  @ApiGetFeedSummary()
+  @Get('/ai/summary')
+  @HttpCode(HttpStatus.OK)
+  async getFeedSummary(@Query('feedId', ParseIntPipe) feedId: number) {
+    const summary = await this.feedService.getFeedSummary(feedId);
+    return ApiResponse.responseWithData('요약 조회 완료', {
+      id: feedId,
+      summary,
+    });
   }
 }
