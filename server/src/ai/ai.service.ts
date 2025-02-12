@@ -9,6 +9,7 @@ export enum AIType {
 
 const contentMaxLength = 7600;
 const summaryMaxLength = 120;
+const summaryContentMinLength = 120;
 
 @Injectable()
 export class AIService {
@@ -16,7 +17,11 @@ export class AIService {
   static reReqCount = 5;
 
   constructor(private readonly configService: ConfigService) {
-    this.summaryConfig = AISummaryConfig(this.configService, summaryMaxLength);
+    this.summaryConfig = AISummaryConfig(
+      this.configService,
+      summaryMaxLength,
+      summaryContentMinLength,
+    );
   }
 
   getConfigByType(type: AIType) {
@@ -63,8 +68,10 @@ export class AIService {
   async postAIReq(type: AIType, feedData: string) {
     try {
       const AIConfig = this.getConfigByType(type);
+      if (feedData.length < AIConfig.MIN_CONTENT_LENGTH) {
+        return '';
+      }
       const cutData = this.cutContent(feedData, contentMaxLength);
-      console.log('count: ' + cutData.length);
       const body = this.getBody(type, cutData);
       let count = 0;
       let resLength = -1;
@@ -94,7 +101,6 @@ export class AIService {
         result = await this.filterResponse(type, response);
         resLength = result.length;
         count++;
-        console.log('summary: ' + result);
       }
       if (resLength > AIConfig.LIMITLENGTH || resLength <= 0) {
         throw new Error('유효하지 않은 응답 데이터입니다.');
@@ -133,7 +139,7 @@ export class AIService {
             if (parsedData.content) {
               accumulatedText = this.cutContent(
                 parsedData.content.trim(),
-                summaryMaxLength,
+                this.summaryConfig.LIMITLENGTH,
               );
               const lastDotIndex = accumulatedText.lastIndexOf('.');
               accumulatedText = accumulatedText.substring(0, lastDotIndex + 1);

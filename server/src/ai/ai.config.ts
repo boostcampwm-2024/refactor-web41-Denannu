@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 
 export interface AIConfig {
+  MIN_CONTENT_LENGTH: number;
   API_KEY: string;
   CLOVASTUDIO_REQUEST_ID: string;
   URL: URL;
@@ -21,7 +22,9 @@ export interface AIConfig {
 export const AISummaryConfig = (
   configService: ConfigService,
   summaryMaxLength: number,
+  summaryContentMinLength: number,
 ): AIConfig => ({
+  MIN_CONTENT_LENGTH: summaryContentMinLength,
   API_KEY: configService.get<string>('API_KEY'),
   CLOVASTUDIO_REQUEST_ID: configService.get<string>(
     'CLOVASTUDIO_REQUEST_ID_SUMMARY',
