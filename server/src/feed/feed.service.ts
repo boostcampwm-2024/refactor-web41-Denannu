@@ -256,4 +256,12 @@ export class FeedService {
 
     return request.socket.remoteAddress;
   }
+
+  async getFeedSummary(feedId: number) {
+    const feed = await this.feedRepository.findOne({ where: { id: feedId } });
+    if (!feed) {
+      throw new NotFoundException(`${feedId}번 피드를 찾을 수 없습니다.`);
+    }
+    return feed.summary;
+  }
 }
