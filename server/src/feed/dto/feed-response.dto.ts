@@ -10,6 +10,7 @@ export class FeedPaginationResponseDto {
     private path: string,
     private createdAt: Date,
     private thumbnail: string,
+    private tags: string[],
     private viewCount: number,
     private isNew: boolean,
   ) {}
@@ -23,6 +24,7 @@ export class FeedPaginationResponseDto {
       feed.path,
       feed.createdAt,
       feed.thumbnail,
+      feed.tags,
       feed.viewCount,
       feed.isNew,
     );

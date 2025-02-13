@@ -14,6 +14,7 @@ export interface JoinedFeed {
   createdAt: Date;
   thumbnail: string;
   viewCount: number;
+  tags: string[];
 }
 
 @Injectable()
@@ -25,17 +26,9 @@ export class FeedRepository extends Repository<Feed> {
   async findFeedPagination(queryFeedDto: QueryFeedDto) {
     const { lastId, limit } = queryFeedDto;
 
-    const query = this.createQueryBuilder('f')
-      .select([
-        'f.id AS feedId',
-        'f.title AS title',
-        'f.path AS path',
-        'f.created_at AS createdAt',
-        'f.thumbnail AS thumbnail',
-        'f.view_count AS viewCount',
-        'r.name AS blogName',
-        'r.blog_platform AS blogPlatform',
-      ])
+    const feeds = await this.createQueryBuilder('f')
+      .leftJoinAndSelect('f.tags', 't')
+      .innerJoinAndSelect('f.blog', 'r')
       .where((qb) => {
         if (lastId) {
           const subQuery = qb
@@ -47,11 +40,21 @@ export class FeedRepository extends Repository<Feed> {
           return `created_at <= (${subQuery}) AND f.id != :lastId`;
         }
       })
-      .innerJoin('rss_accept', 'r', 'f.blog_id = r.id')
       .orderBy('f.created_at', 'DESC')
-      .limit(limit + 1);
+      .limit(limit + 1)
+      .getMany();
 
-    return await query.getRawMany();
+    return feeds.map((feed) => ({
+      feedId: feed.id,
+      title: feed.title,
+      path: feed.path,
+      createdAt: feed.createdAt,
+      thumbnail: feed.thumbnail,
+      viewCount: feed.viewCount,
+      blogName: feed.blog?.name,
+      blogPlatform: feed.blog?.blogPlatform,
+      tags: feed.tags.map((tag) => tag.name),
+    }));
   }
 
   async findFeedById(feedId: number): Promise<JoinedFeed> {
