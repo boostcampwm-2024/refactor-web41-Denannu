@@ -7,6 +7,7 @@ import { Feed } from '../feed/feed.entity';
 import { AIService, AIType } from '../ai/ai.service';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { TagService } from '../tag/tag.service';
 
 @Injectable()
 export class FeedCrawlerService {
@@ -14,6 +15,7 @@ export class FeedCrawlerService {
     private readonly feedRepository: FeedRepository,
     private readonly rssParser: RssParserService,
     private readonly feedAI: AIService,
+    private readonly tagService: TagService,
   ) {}
 
   async loadRssFeeds(rssUrl: string) {
@@ -21,7 +23,7 @@ export class FeedCrawlerService {
   }
 
   async saveRssFeeds(feeds: Partial<Feed>[]) {
-    return await this.feedRepository.insert(feeds);
+    return await this.feedRepository.save(feeds);
   }
 
   private async fetchRss(rssUrl: string): Promise<Partial<Feed>[]> {
@@ -47,6 +49,8 @@ export class FeedCrawlerService {
       objFromXml.rss.channel.item.map(async (feed) => {
         const content = await this.crawlingFeedContent(feed.link);
         const summary = await this.feedAI.postAIReq(AIType.Summary, content);
+        const AITags = await this.feedAI.postAIReq(AIType.Tag, content);
+        const tags = await this.tagService.getTags(AITags);
         const date = new Date(feed.pubDate);
         const contentLength = this.getContentLength(content);
         const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
@@ -58,6 +62,7 @@ export class FeedCrawlerService {
           createdAt: formattedDate,
           summary,
           contentLength,
+          tags,
         };
       }),
     );
