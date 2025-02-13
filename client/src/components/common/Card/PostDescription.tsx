@@ -68,6 +68,14 @@ export const PostDescription = ({ postId, children }: PostDescriptionProps) => {
       );
     }
 
+    if (description === "" && hasRequested) {
+      return (
+        <div className="py-1">
+          <p className="text-sm text-muted-foreground">게시글의 길이가 짧아서 요약이 제공되지 않습니다.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="py-1">
         <p className="text-sm text-foreground leading-relaxed">{description}</p>
