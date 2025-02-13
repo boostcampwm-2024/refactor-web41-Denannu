@@ -11,9 +11,10 @@ import { FeedRepository } from '../feed/feed.repository';
 import { RssParserService } from './rss-parser.service';
 import { EmailModule } from '../common/email/email.module';
 import { AIModule } from '../ai/ai.module';
+import { TagModule } from '../tag/tag.module';
 
 @Module({
-  imports: [EmailModule, AIModule],
+  imports: [EmailModule, AIModule, TagModule],
   controllers: [RssController],
   providers: [
     RssService,
