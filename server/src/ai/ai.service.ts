@@ -36,7 +36,7 @@ export class AIService {
       Authorization: `Bearer ${AIConfig.API_KEY}`,
       'X-NCP-CLOVASTUDIO-REQUEST-ID': `${AIConfig.CLOVASTUDIO_REQUEST_ID}`,
       'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
+      Accept: 'application/json',
     };
   }
 
@@ -98,7 +98,9 @@ export class AIService {
           throw new Error('응답 스트림이 없습니다.');
         }
 
-        result = await this.filterResponse(type, response);
+        const responseData = await response.json();
+        const responseText = responseData.result.message.content;
+        result = await this.filterResponse(type, responseText);
         resLength = result.length;
         count++;
       }
@@ -112,45 +114,17 @@ export class AIService {
     }
   }
 
-  async filterResponse(type: AIType, response: Response) {
+  async filterResponse(type: AIType, response: string) {
     if (type == AIType.Summary) {
       return await this.summaryResFilter(response);
     }
     return '';
   }
 
-  async summaryResFilter(response: Response) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let accumulatedText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      const isResult = chunk.match(/event:result/g);
-      if (!isResult) continue;
-      const dataMatches = chunk.match(/\"message\":\s*(\{.*?\})/g);
-      if (dataMatches) {
-        dataMatches.forEach((data) => {
-          try {
-            const jsonString = data.replace('"message":', '').trim();
-            const parsedData = JSON.parse(jsonString);
-            if (parsedData.content) {
-              accumulatedText = this.cutContent(
-                parsedData.content.trim(),
-                this.summaryConfig.LIMITLENGTH,
-              );
-              const lastDotIndex = accumulatedText.lastIndexOf('.');
-              accumulatedText = accumulatedText.substring(0, lastDotIndex + 1);
-            }
-          } catch (error) {
-            console.error('JSON 파싱 실패:', error);
-          }
-        });
-      }
-    }
-    await reader.cancel();
-    return accumulatedText;
+  async summaryResFilter(result: string) {
+    let content = this.cutContent(result, this.summaryConfig.LIMITLENGTH);
+    const lastDotIndex = content.lastIndexOf('.');
+    content = content.substring(0, lastDotIndex + 1);
+    return content;
   }
 }
