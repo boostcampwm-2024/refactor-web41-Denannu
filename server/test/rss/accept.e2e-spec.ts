@@ -8,6 +8,7 @@ import {
   RssAcceptRepository,
   RssRepository,
 } from '../../src/rss/rss.repository';
+import { FeedCrawlerService } from '../../src/rss/feed-crawler.service';
 
 describe('Rss Accept E2E Test', () => {
   let app: INestApplication;
@@ -50,7 +51,7 @@ describe('Rss Accept E2E Test', () => {
         // then
         expect(response.status).toBe(201);
         expect(accepted).not.toBeNull();
-      });
+      }, 10000);
     });
 
     describe('비정상적인 요청을 한다.', () => {
