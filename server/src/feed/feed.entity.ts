@@ -5,6 +5,7 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -64,6 +65,11 @@ export class Feed extends BaseEntity {
   blog: RssAccept;
 
   @ManyToMany((type) => Tag, (tag) => tag.feeds)
+  @JoinTable({
+    name: 'feed_tags',
+    joinColumn: { name: 'feed_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+  })
   tags: Tag[];
 }
 

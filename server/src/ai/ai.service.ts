@@ -1,19 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { delay } from 'rxjs/operators';
-import { AIConfig, AISummaryConfig } from './ai.config';
+import { AIConfig, AISummaryConfig, AITagConfig } from './ai.config';
 
 export enum AIType {
   Summary,
+  Tag,
 }
 
 const contentMaxLength = 7600;
 const summaryMaxLength = 120;
 const summaryContentMinLength = 120;
+const tagMaxLength = 100;
 
 @Injectable()
 export class AIService {
   private summaryConfig: AIConfig;
+  private tagConfig: AIConfig;
   static reReqCount = 5;
 
   constructor(private readonly configService: ConfigService) {
@@ -22,10 +25,12 @@ export class AIService {
       summaryMaxLength,
       summaryContentMinLength,
     );
+    this.tagConfig = AITagConfig(this.configService, tagMaxLength);
   }
 
   getConfigByType(type: AIType) {
     if (type == AIType.Summary) return this.summaryConfig;
+    if (type == AIType.Tag) return this.tagConfig;
     else return null;
   }
 
@@ -82,7 +87,7 @@ export class AIService {
       ) {
         const response = await fetch(AIConfig.URL, {
           method: 'POST',
-          headers: this.getHeader(AIType.Summary),
+          headers: this.getHeader(type),
           body: JSON.stringify(body),
         });
 
@@ -117,6 +122,9 @@ export class AIService {
   async filterResponse(type: AIType, response: string) {
     if (type == AIType.Summary) {
       return await this.summaryResFilter(response);
+    }
+    if (type == AIType.Tag) {
+      return response;
     }
     return '';
   }
