@@ -123,7 +123,10 @@ export class AIService {
     if (type == AIType.Summary) {
       return await this.summaryResFilter(response);
     }
-    return response;
+    if (type == AIType.Tag) {
+      return response;
+    }
+    return '';
   }
 
   async summaryResFilter(result: string) {
