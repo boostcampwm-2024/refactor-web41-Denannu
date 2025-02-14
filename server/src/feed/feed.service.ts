@@ -85,7 +85,7 @@ export class FeedService {
       ),
     );
     return FeedTrendResponseDto.toFeedTrendResponseDtoArray(
-      trendFeeds.filter((feed) => feed !== null),
+      trendFeeds.filter((feed) => Boolean(feed)),
     );
   }
 

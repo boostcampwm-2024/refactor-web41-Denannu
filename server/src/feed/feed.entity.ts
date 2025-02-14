@@ -50,10 +50,13 @@ export class Feed extends BaseEntity {
 
   @Column({
     length: 120,
+    nullable: true,
   })
   summary: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   contentLength: number;
 
   @ManyToOne((type) => RssAccept, (rssAccept) => rssAccept.feeds, {

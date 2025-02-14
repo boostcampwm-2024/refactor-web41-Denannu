@@ -110,7 +110,7 @@ export class FeedCrawlerService {
         content = $('section').text();
         break;
       default:
-        content = null;
+        content = '아직 지원하지 않는 플랫폼 입니다.';
     }
 
     return content;
