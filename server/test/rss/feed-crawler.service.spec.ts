@@ -3,12 +3,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FeedRepository } from '../../src/feed/feed.repository';
 import { RssParserService } from '../../src/rss/rss-parser.service';
 import { AIService } from '../../src/ai/ai.service';
+import { TagService } from '../../src/tag/tag.service';
 
 describe('FeedCrawlerService', () => {
   let feedCrawlerService: FeedCrawlerService;
   let feedRepository: FeedRepository;
   let rssParserService: RssParserService;
   let aiService: AIService;
+  let tagService: TagService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,6 +28,10 @@ describe('FeedCrawlerService', () => {
           provide: AIService,
           useValue: {},
         },
+        {
+          provide: TagService,
+          useValue: {},
+        },
       ],
     }).compile();
 
@@ -33,6 +39,7 @@ describe('FeedCrawlerService', () => {
     feedRepository = module.get<FeedRepository>(FeedRepository);
     rssParserService = module.get<RssParserService>(RssParserService);
     aiService = module.get<AIService>(AIService);
+    tagService = module.get<TagService>(TagService);
   });
 
   describe('플랫폼 게시글 본문 크롤링', () => {
