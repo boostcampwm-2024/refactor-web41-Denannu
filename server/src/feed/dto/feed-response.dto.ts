@@ -1,4 +1,5 @@
 import { FeedView } from '../feed.entity';
+import { JoinedFeed } from '../feed.repository';
 
 export class FeedPaginationResponseDto {
   private constructor(
@@ -9,6 +10,7 @@ export class FeedPaginationResponseDto {
     private path: string,
     private createdAt: Date,
     private thumbnail: string,
+    private tags: string[],
     private viewCount: number,
     private isNew: boolean,
   ) {}
@@ -22,6 +24,7 @@ export class FeedPaginationResponseDto {
       feed.path,
       feed.createdAt,
       feed.thumbnail,
+      feed.tags,
       feed.viewCount,
       feed.isNew,
     );
@@ -34,7 +37,7 @@ export class FeedPaginationResponseDto {
   }
 }
 
-export type FeedPaginationResult = FeedView & { isNew: boolean };
+export type FeedPaginationResult = JoinedFeed & { isNew: boolean };
 
 export class FeedTrendResponseDto {
   private constructor(
@@ -48,7 +51,7 @@ export class FeedTrendResponseDto {
     private viewCount: number,
   ) {}
 
-  private static toFeedTrendResponseDto(feed: FeedView) {
+  private static toFeedTrendResponseDto(feed: JoinedFeed) {
     return new FeedTrendResponseDto(
       feed.feedId,
       feed.blogName,
@@ -61,7 +64,7 @@ export class FeedTrendResponseDto {
     );
   }
 
-  public static toFeedTrendResponseDtoArray(FeedList: FeedView[]) {
+  public static toFeedTrendResponseDtoArray(FeedList: JoinedFeed[]) {
     return FeedList.map(this.toFeedTrendResponseDto);
   }
 }

@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { validate } from 'class-validator';
 import { QueryFeedDto } from '../../../src/feed/dto/query-feed.dto';
 

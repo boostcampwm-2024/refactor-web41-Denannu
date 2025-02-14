@@ -15,6 +15,7 @@ export enum SearchType {
   TITLE = 'title',
   BLOGNAME = 'blogName',
   ALL = 'all',
+  TAG = 'tag',
 }
 
 export class FeedIndex {

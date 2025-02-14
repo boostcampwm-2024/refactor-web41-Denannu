@@ -3,11 +3,75 @@ import { Feed, FeedView } from './feed.entity';
 import { Injectable } from '@nestjs/common';
 import { QueryFeedDto } from './dto/query-feed.dto';
 import { Cursor, FeedIndex, SearchType } from './dto/search-feed.dto';
+import { reject } from 'lodash';
+
+export interface JoinedFeed {
+  feedId: number;
+  blogName: string;
+  blogPlatform: string;
+  title: string;
+  path: string;
+  createdAt: Date;
+  thumbnail: string;
+  viewCount: number;
+  tags: string[];
+}
 
 @Injectable()
 export class FeedRepository extends Repository<Feed> {
   constructor(private dataSource: DataSource) {
     super(Feed, dataSource.createEntityManager());
+  }
+
+  async findFeedPagination(queryFeedDto: QueryFeedDto) {
+    const { lastId, limit } = queryFeedDto;
+
+    const feeds = await this.createQueryBuilder('f')
+      .leftJoinAndSelect('f.tags', 't')
+      .innerJoinAndSelect('f.blog', 'r')
+      .where((qb) => {
+        if (lastId) {
+          const subQuery = qb
+            .subQuery()
+            .select('created_at')
+            .from(Feed, 'f')
+            .where('f.id = :lastId', { lastId })
+            .getQuery();
+          return `created_at <= (${subQuery}) AND f.id != :lastId`;
+        }
+      })
+      .orderBy('f.created_at', 'DESC')
+      .limit(limit + 1)
+      .getMany();
+
+    return feeds.map((feed) => ({
+      feedId: feed.id,
+      title: feed.title,
+      path: feed.path,
+      createdAt: feed.createdAt,
+      thumbnail: feed.thumbnail,
+      viewCount: feed.viewCount,
+      blogName: feed.blog?.name,
+      blogPlatform: feed.blog?.blogPlatform,
+      tags: feed.tags.map((tag) => tag.name),
+    }));
+  }
+
+  async findFeedById(feedId: number): Promise<JoinedFeed> {
+    const query = this.createQueryBuilder('f')
+      .select([
+        'f.id AS feedId',
+        'f.title AS title',
+        'f.path AS path',
+        'f.created_at AS createdAt',
+        'f.thumbnail AS thumbnail',
+        'f.view_count AS viewCount',
+        'r.name AS blogName',
+        'r.blog_platform AS blogPlatform',
+      ])
+      .where('f.id = :feedId', { feedId })
+      .innerJoin('rss_accept', 'r', 'f.blog_id = r.id');
+    return await query.getRawOne();
   }
 
   async searchFeedList(
@@ -17,14 +81,44 @@ export class FeedRepository extends Repository<Feed> {
     page: number,
     cursor?: Cursor,
   ): Promise<[Feed[], number, Cursor]> {
-    // if (!cursor) {
-    //   return this.searchFeedListByBatch(find, limit, type, page);
-    // }
+    if (page === 1) {
+      const abortControllerForBatch = new AbortController();
+      const result = await Promise.race([
+        this.searchFeedListByStandard(find, limit, type, page, cursor),
+        this.searchFeedListByBatch(
+          find,
+          limit,
+          type,
+          page,
+          abortControllerForBatch,
+        ),
+      ]);
+      abortControllerForBatch.abort();
+      return result;
+    }
+    return this.searchFeedListByStandard(find, limit, type, page, cursor);
+  }
+
+  private async searchFeedListByStandard(
+    find: string,
+    limit: number,
+    type: SearchType,
+    page: number,
+    cursor?: Cursor,
+  ): Promise<[Feed[], number, Cursor]> {
     const offset = cursor
       ? (Math.abs(page - cursor.curPage) - 1) * limit
       : (page - 1) * limit;
-    const queryBuilder = this.createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.blog', 'rss_accept')
+    const queryBuilder = this.createQueryBuilder('feed').innerJoinAndSelect(
+      'feed.blog',
+      'rss_accept',
+    );
+
+    if (type === 'tag') {
+      queryBuilder.innerJoin('feed.tags', 'tag');
+    }
+
+    queryBuilder
       .where(this.getWhereCondition(type), { find: `%${find}%` })
       .orderBy('feed.createdAt', 'DESC')
       .skip(offset)
@@ -76,17 +170,62 @@ export class FeedRepository extends Repository<Feed> {
     limit: number,
     type: SearchType,
     page: number,
+    abortController?: AbortController,
   ): Promise<[Feed[], number, Cursor]> {
+    try {
+      const unfilteredTotal = await this.createQueryBuilder('feed').getCount();
+      const qb = this.createQueryBuilder('feed').innerJoinAndSelect(
+        'feed.blog',
+        'rss_accept',
+      );
+
+      if (type === 'tag') {
+        qb.innerJoin('feed.tags', 'tag');
+      }
+
+      const getTotal = qb
+        .where(this.getWhereCondition(type), { find: `%${find}%` })
+        .getCount();
+
+      const [total, feeds] = await Promise.all([
+        getTotal,
+        this.findFeedWhile(find, limit, type, unfilteredTotal, abortController),
+      ]);
+      const preIndex =
+        feeds.length > 0
+          ? new FeedIndex(feeds[0].createdAt, feeds[0].id)
+          : null;
+      const nextIndex =
+        feeds.length > 0
+          ? new FeedIndex(
+              feeds[feeds.length - 1].createdAt,
+              feeds[feeds.length - 1].id,
+            )
+          : null;
+      const resultCursor = new Cursor(page, preIndex, nextIndex);
+      return [feeds, total, resultCursor];
+    } catch (e) {
+      if (abortController?.signal.aborted) return [null, 0, null];
+      throw e;
+    }
+  }
+
+  private async findFeedWhile(
+    find: string,
+    limit: number,
+    type: SearchType,
+    unfilteredTotal: number,
+    abortController?: AbortController,
+  ): Promise<Feed[]> {
+    const signal = abortController?.signal;
+    let leftData = limit;
     let batchNum = 0;
     const batchSize = 1000;
-    const unfilteredTotal = await this.createQueryBuilder('feed').getCount();
-    const total = await this.createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.blog', 'rss_accept')
-      .where(this.getWhereCondition(type), { find: `%${find}%` })
-      .getCount();
-    let leftData = limit;
     let feeds = [];
     while (leftData > 0 && batchNum < unfilteredTotal) {
+      if (signal && signal.aborted) {
+        throw new Error('search Promise(batch) aborted');
+      }
       const subQuery = this.createQueryBuilder()
         .subQuery()
         .select('feedSub.id', 'id')
@@ -101,7 +240,13 @@ export class FeedRepository extends Repository<Feed> {
         .getQuery();
       const queryBuilder = this.createQueryBuilder('feed')
         .innerJoin(subQuery, 'feedSub', 'feedSub.id = feed.id')
-        .innerJoinAndSelect('feed.blog', 'rss_accept')
+        .innerJoinAndSelect('feed.blog', 'rss_accept');
+
+      if (type === 'tag') {
+        queryBuilder.innerJoin('feed.tags', 'tag');
+      }
+
+      queryBuilder
         .andWhere(this.getWhereCondition(type), { find: `%${find}%` })
         .orderBy('feed.createdAt', 'DESC')
         .take(leftData);
@@ -111,18 +256,7 @@ export class FeedRepository extends Repository<Feed> {
       leftData -= tnsCount;
       batchNum += batchSize;
     }
-
-    const preIndex =
-      feeds.length > 0 ? new FeedIndex(feeds[0].createdAt, feeds[0].id) : null;
-    const nextIndex =
-      feeds.length > 0
-        ? new FeedIndex(
-            feeds[feeds.length - 1].createdAt,
-            feeds[feeds.length - 1].id,
-          )
-        : null;
-    const resultCursor = new Cursor(page, preIndex, nextIndex);
-    return [feeds, total, resultCursor];
+    return feeds;
   }
 
   private getWhereCondition(type: string): string {
@@ -133,6 +267,8 @@ export class FeedRepository extends Repository<Feed> {
         return 'rss_accept.name LIKE :find';
       case 'all':
         return '(feed.title LIKE :find OR rss_accept.name LIKE :find)';
+      case 'tag':
+        return 'tag.name LIKE :find';
     }
   }
 
@@ -153,6 +289,9 @@ export class FeedViewRepository extends Repository<FeedView> {
     super(FeedView, dataSource.createEntityManager());
   }
 
+  /**
+   * @deprecated this method is deprecated. Use FeedRepository.findFeedPagination instead.
+   */
   async findFeedPagination(queryFeedDto: QueryFeedDto) {
     const { lastId, limit } = queryFeedDto;
     const query = this.createQueryBuilder()
@@ -164,11 +303,10 @@ export class FeedViewRepository extends Repository<FeedView> {
             .from('feed_view', 'fv')
             .where('fv.feed_id = :lastId', { lastId })
             .getQuery();
-          return `order_id < (${subQuery})`;
+          return `order_id > (${subQuery})`;
         }
         return '';
       })
-      .orderBy('order_id', 'DESC')
       .take(limit + 1);
 
     return await query.getMany();
