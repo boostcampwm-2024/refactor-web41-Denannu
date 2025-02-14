@@ -39,7 +39,7 @@ export class EmailService {
         description,
       );
       await this.transporter.sendMail({
-        from: `Denamu<${this.emailUser}>`,
+        from: `Denannu<${this.emailUser}>`,
         to: `${rss.userName}<${rss.email}>`,
         subject,
         html: content,
@@ -55,7 +55,7 @@ export class EmailService {
   private createEmail(rss: Rss, approveFlag: boolean, description?: string) {
     const result = approveFlag ? `승인` : `거부`;
     const mail = {
-      subject: `[🎋 Denamu] RSS 등록이 ${result} 되었습니다.`,
+      subject: `[🎋 Denannu] RSS 등록이 ${result} 되었습니다.`,
       content: createMailContent(rss, approveFlag, this.emailUser, description),
     };
     return mail;
