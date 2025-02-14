@@ -5,12 +5,25 @@ import { WinstonLoggerService } from '../src/common/logger/logger.service';
 import { InternalExceptionsFilter } from '../src/common/filters/internal-exceptions.filter';
 import { HttpExceptionsFilter } from '../src/common/filters/http-exception.filter';
 import * as cookieParser from 'cookie-parser';
+import { AIService, AIType } from '../src/ai/ai.service';
 
 let app: INestApplication;
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  })
+    .overrideProvider(AIService)
+    .useValue({
+      postAIReq: jest
+        .fn()
+        .mockImplementation(async (type: AIType, content: string) => {
+          if (type === AIType.Summary) {
+            return 'Summary';
+          }
+          return `{ "tags": ["tag1", "tag2"] }`;
+        }),
+    })
+    .compile();
 
   app = moduleFixture.createNestApplication();
   const logger = app.get(WinstonLoggerService);
