@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch: # 수동 실행을 허용하는 이벤트
 
 jobs:
@@ -25,9 +25,6 @@ jobs:
             cd refactor-web41-Denannu
             git pull origin main
 
-            echo "${{ secrets.REDIS_CONF }}" > redis.conf
-            docker compose up -d --build redis
-
             cd server
 
             echo "${{ secrets.ENV_BE_DB}}" > configs/.env.db.production
@@ -37,4 +34,7 @@ jobs:
             echo "${{ secrets.ENV_BE_RSS }}" > .env
             cd ..
 
-            docker compose up -d --build server
+            docker compose stop server
+            docker compose rm -f server
+            docker compose build --no-cache server
+            docker compose up -d server
