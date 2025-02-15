@@ -1,33 +1,25 @@
-FROM node:18
-
-RUN npm install -g pm2 typescript
-
-WORKDIR /app
-RUN mkdir ./server
-RUN mkdir ./feed-crawler
-
-COPY ./ecosystem.config.js ./
-COPY ./server/package*.json ./server
-
-WORKDIR /app/server
-RUN npm install
-
-WORKDIR /app
-COPY ./feed-crawler/package*.json ./feed-crawler
-WORKDIR /app/feed-crawler
-RUN npm install
-
-WORKDIR /app
-COPY ./server ./server
-COPY ./feed-crawler ./feed-crawler
-
-WORKDIR /app/server
-RUN npm run build
-
-WORKDIR /app/feed-crawler
-RUN tsc
+FROM node:18-slim
 
 EXPOSE 8080
+
+WORKDIR /app
+COPY ./ecosystem.config.js ./
+
+WORKDIR /app/feed-crawler
+COPY ./feed-crawler/package*.json ./
+RUN npm ci && npm cache clean --force && npm install -g pm2 typescript
+
+WORKDIR /app/server
+COPY ./server/package*.json ./
+RUN npm ci && npm cache clean --force
+
+WORKDIR /app/feed-crawler
+COPY ./feed-crawler ./
+RUN tsc
+
+WORKDIR /app/server
+COPY ./server ./
+RUN npm run build
 
 WORKDIR /app
 

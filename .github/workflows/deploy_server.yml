@@ -34,4 +34,5 @@ jobs:
             echo "${{ secrets.ENV_BE_RSS }}" > .env
             cd ..
 
-            docker compose up -d --build server
+            docker compose build --no-cache server
+            docker compose up -d server
