@@ -7,9 +7,13 @@ export class TagService {
   constructor(private readonly tagRepository: TagRepository) {}
 
   async getTags(AITags: string): Promise<Tag[]> {
-    const tags = JSON.parse(AITags).tags;
+    const jsonString = AITags.match(/\{"tags":\s*\[.*\]\}/);
+    let tags = [];
 
-    if (!tags || tags.length === 0) return [];
+    if (jsonString && jsonString[0]) {
+      const parsedData = JSON.parse(jsonString[0]);
+      tags = parsedData.tags ? parsedData.tags.slice(0, 3) : [];
+    }
 
     const existingTags = await this.tagRepository.findTags(tags);
 
