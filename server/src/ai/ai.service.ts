@@ -11,7 +11,7 @@ export enum AIType {
 const contentMaxLength = 7600;
 const summaryMaxLength = 120;
 const summaryContentMinLength = 120;
-const tagMaxLength = 100;
+const tagMaxLength = 200;
 
 @Injectable()
 export class AIService {
