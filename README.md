@@ -53,6 +53,16 @@ RSS 링크만으로 간편하게 블로그를 등록할 수 있어요. 등록된
 ![채팅](https://github.com/user-attachments/assets/7c913fd5-e6e9-442c-bb41-3a60677614cd)
 실시간 채팅을 통해 현재 데나무를 보고있는 개발자들과 실시간으로 자유롭게 소통할 수 있어요. 관심 있는 기술에 대해 바로 피드백을 주고받으며 함께 성장할 수 있어요.
 
+## 추가적인 기능 개발
+
+### AI가 적용된 홍보용 피드 요약
+![피드 요약](https://github.com/user-attachments/assets/caca0ac0-566b-4311-8861-69bd123e7ebf)
+AI 프롬프트를 통해 피드의 대략적인 내용을 구성하여, 피드에 마우스를 올리면 간단하게 읽어볼 수 있어요. 세부 내용에서 관심이 가는 주제를 다루는지 더 편하게 볼 수 있게 되었어요.
+
+### tag 검색 기능
+![태그 검색](https://github.com/user-attachments/assets/ffc9e15d-e559-419b-ba4b-2facb819b372)
+AI를 통해 피드의 키워드를 3개 이하로 추출하여 함께 보여줘요. 내가 관심있는 내용을 주제로 한 피드를 더 쉽게 찾아볼 수 있어요.
+
 ## 🛠 기술 스택
 
 <img src="https://github.com/user-attachments/assets/a6434f11-8b71-4a7b-93fd-fcd7e0229fa0" alt="tech stack v3" >
